@@ -1,0 +1,57 @@
+services:
+ 
+ 
+ 
+ 
+  api:
+    build: ./L2_API
+    container_name: fastapi
+    environment:
+      PORT: 8000
+    ports:
+      - '8000:8000'
+    restart: always
+    volumes:
+      - ./L2_data:/app/database
+
+
+  node-red:
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    networks:
+      - node-red-net
+    volumes:
+      - ./L2_nodered/node-red-data:/data
+      - ./L2_data:/database
+    depends_on:
+      - mqtt5
+
+  mqtt5:
+    image: eclipse-mosquitto
+    container_name: mqtt5
+    ports:
+      - "1883:1883" #default mqtt port
+      - "9001:9001" #default mqtt port for websockets
+    volumes:
+      - ./L2_MQTT/config:/L2_MQTT/config:rw
+      - ./L2_MQTT/data:/L2_MQTT/data:rw
+      - ./L2_MQTT/log:/L2_MQTT/log:rw
+    networks:
+      - node-red-net  
+    restart: always
+
+# volumes for mapping data,config and log
+volumes:
+  node-red-data:
+  config:
+  data:
+  log:
+
+networks:
+  node-red-net:
+    name: node-red-net
+  default:
+    name: mqtt5-network
