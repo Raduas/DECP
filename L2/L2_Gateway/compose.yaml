@@ -1,8 +1,5 @@
 services:
- 
- 
- 
- 
+
   api:
     build: ./L2_API
     container_name: fastapi
@@ -13,7 +10,8 @@ services:
     restart: always
     volumes:
       - ./L2_data:/app/database
-
+    depends_on:
+      - mqtt5
 
   node-red:
     image: nodered/node-red:latest
@@ -21,13 +19,27 @@ services:
       - TZ=Europe/Amsterdam
     ports:
       - "1880:1880"
-    networks:
-      - node-red-net
+    
     volumes:
       - ./L2_nodered/node-red-data:/data
       - ./L2_data:/database
     depends_on:
       - mqtt5
+  sqlite-web:
+    image: coleifer/sqlite-web
+    container_name: sqlite-web
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./L2_data:/data
+    # Tady musíš zadat přesný název tvého DB souboru! 
+    # Podle předchozích zpráv se jmenuje L2gateway.db
+    entrypoint: sqlite_web -H 0.0.0.0 -p 8080 /data/L2.db
+    depends_on:
+      - api
+
+
 
   mqtt5:
     image: eclipse-mosquitto
@@ -39,9 +51,9 @@ services:
       - ./L2_MQTT/config:/L2_MQTT/config:rw
       - ./L2_MQTT/data:/L2_MQTT/data:rw
       - ./L2_MQTT/log:/L2_MQTT/log:rw
-    networks:
-      - node-red-net  
+    
     restart: always
+
 
 # volumes for mapping data,config and log
 volumes:
@@ -51,7 +63,7 @@ volumes:
   log:
 
 networks:
-  node-red-net:
-    name: node-red-net
+  net:
+    name: net
   default:
     name: mqtt5-network
