@@ -15,7 +15,9 @@ int param_c = 0;                  // Třetí ukázkový parametr
 int small_id = 0;
 int local_channel = 0; // L2 ID senzoru, které nám přiřadí L2 po registraci
 bool isRegistered = false;
-
+bool config = false;
+bool typeMeas = false;
+bool start = false;
 // Senzor
 int thermoDO = 19;
 int thermoCS = 23;
@@ -38,7 +40,8 @@ enum State
     CONNECTING,
     REGISTERING,
     WAITING_CONFIG,
-    MEASURING,
+    MEASURING_START,
+    MEASURING_CONT,
     ERROR_STATE
 };
 State currentState = INIT;
@@ -46,8 +49,9 @@ State currentState = INIT;
 // Časovače pro neblokující kód
 unsigned long lastActionTime = 0;
 unsigned long lastMeasureTime = 0;
-const unsigned long MEASURE_INTERVAL = 5000; // 1 sekunda
-const unsigned long TIMEOUT_MS = 10000;      // 10 sekund timeout
+unsigned long MEASURE_INTERVAL = 5000;
+long hz = 0;
+const unsigned long TIMEOUT_MS = 10000;
 
 // --- MQTT CALLBACK (Asynchronní příjem dat) ---
 void callback(char *topic, byte *message, unsigned int length)
@@ -67,12 +71,13 @@ void callback(char *topic, byte *message, unsigned int length)
     if (String(topic) == responseTopic)
     {
         StaticJsonDocument<256> doc;
-
         deserializeJson(doc, msg);
 
-        small_id = doc["short_id"];           // L2 nám přiřadí tento krátký ID pro další komunikaci
-        local_channel = doc["local_channel"]; // L2 nám přiřadí tento ID SENZORU pro další komunikaci
-
+        small_id = doc["short_id"];               // L2 nám přiřadí tento krátký ID pro další komunikaci
+        local_channel = doc["local_channel"];     // L2 nám přiřadí tento ID SENZORU pro další komunikaci
+        typeMeas = doc["typeMeasurement"];        // L2 nám přiřadí tento typ měření (nepovinné, záleží na implementaci L2)
+        hz = doc["measIntervalHz"]; // L2 nám přiřadí tento interval pro měření (nepovinné, záleží na implementaci L2)
+        MEASURE_INTERVAL = 1000 / hz; // Převod z Hz na ms
         isRegistered = true;
 
         Serial.print("ID: ");
@@ -81,6 +86,15 @@ void callback(char *topic, byte *message, unsigned int length)
         Serial.print("Channel: ");
         Serial.println(local_channel);
     }
+    
+    String startTopic = "l1/start/" + macString;
+    if (String(topic) == startTopic)
+    {
+        StaticJsonDocument<256> doc;
+        deserializeJson(doc, msg);
+        start = doc["start"];
+    }
+    
 }
 
 // --- SETUP ---
@@ -169,11 +183,17 @@ void loop()
 
     case WAITING_CONFIG:
         // Zde MCU nedělá nic, jen čeká na vlajku od callbacku
-        if (isRegistered)
+        if (isRegistered && typeMeas) // Pokud jsme zaregistrováni a máme nastavený typ měření, můžeme přejít do měření
         {
-            Serial.println("Stav: Prechod do MEASURING");
-            currentState = MEASURING;
+            Serial.println("Stav: Prechod do MEASURING_CONT");
+            currentState = MEASURING_CONT;
         }
+        else if (isRegistered && !typeMeas) // Pokud jsme zaregistrováni, ale nemáme nastavený typ měření, můžeme přejít do měření, ale upozorníme na to
+        {
+            Serial.println("Stav: Prechod do MEASURING_START");
+            currentState = MEASURING_START;
+        }
+
         // Kontrola timeoutu (pokud L2 neodpoví)
         else if (millis() - lastActionTime > TIMEOUT_MS)
         {
@@ -182,7 +202,7 @@ void loop()
         }
         break;
 
-    case MEASURING:
+    case MEASURING_CONT:
         // Kontrola, zda nám nespadlo spojení
         if (!client.connected() || WiFi.status() != WL_CONNECTED)
         {
@@ -194,6 +214,32 @@ void loop()
 
         // Neblokující měření
         if (millis() - lastMeasureTime >= MEASURE_INTERVAL)
+        {
+            lastMeasureTime = millis();
+
+            float temp = thermocouple.readCelsius();
+            Serial.print("Mereni: ");
+            Serial.print(temp);
+            Serial.println(" C");
+
+            // Sestavení JSONu
+            String payload = "{\"device_id\":\"" + String(small_id) + "\",\"local_channel\":\"" + String(local_channel) + "\",\"temp\":" + String(temp) + "}";
+            client.publish("l1/test", payload.c_str());
+        }
+        break;
+
+    case MEASURING_START:
+        // Kontrola, zda nám nespadlo spojení
+        if (!client.connected() || WiFi.status() != WL_CONNECTED)
+        {
+            Serial.println("Chyba: Ztrata spojeni behem mereni!");
+            currentState = CONNECTING;
+            lastActionTime = millis();
+            break;
+        }
+
+        // Neblokující měření
+        if (start && millis() - lastMeasureTime >= MEASURE_INTERVAL)
         {
             lastMeasureTime = millis();
 

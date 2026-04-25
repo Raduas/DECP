@@ -27,15 +27,24 @@ async def init_db():
     );
     """)
 
+    # ---------- config ----------
+    await db.execute("""
+    CREATE TABLE IF NOT EXISTS configs (
+        deviceID TEXT PRIMARY KEY,
+        typeMeasurement TEXT CHECK(typeMeasurement IN ('SESSION', 'CONTINUAL')) default 'CONTINUAL',
+        measIntervalHz INT default 1,
 
+        FOREIGN KEY (deviceID)
+            REFERENCES DeviceL1(id)
+    );
+    """)
     # ---------- Sensors ----------
     await db.execute("""
     CREATE TABLE IF NOT EXISTS Sensors (
         sensorID INTEGER PRIMARY KEY AUTOINCREMENT,
         deviceID TEXT,
         local_channel TINYINT,
-        sensorName VARCHAR(30),
-
+        sensorName VARCHAR(30) NOT NULL,
         conversion_rule TEXT CHECK(
             conversion_rule IN (
                 'NONE',
@@ -44,13 +53,19 @@ async def init_db():
                 'QUADRATIC'
             )
         ),
-
+                     
         param_a REAL DEFAULT 0.0,
         param_b REAL DEFAULT 0.0,
         param_c REAL DEFAULT 0.0,
 
         FOREIGN KEY (deviceID)
             REFERENCES DeviceL1(id)
+                     
+        -- jeden název senzoru jen jednou na device     
+        UNIQUE(deviceID, sensorName),
+
+        -- jeden kanál jen jednou na device
+        UNIQUE(deviceID, local_channel)
     );
     """)
 
@@ -71,6 +86,8 @@ async def init_db():
             REFERENCES Sensors(sensorID)
     );
     """)
+
+
     # index pro výkon (velmi důležité)
     await db.execute("""
     CREATE INDEX IF NOT EXISTS idx_measurements_sensor
@@ -152,7 +169,22 @@ async def get_device_by_mac(mac):
 
     return await cursor.fetchone()
 
+async def get_all_devices():
 
+    cursor = await db.execute("""
+    SELECT id,
+           mac_address,
+           deviceName,
+           short_id,
+           status
+    FROM DeviceL1
+    ORDER BY deviceName;
+    """)
+
+    rows = await cursor.fetchall()
+    await cursor.close()
+
+    return rows
 
 # =========================
 # SENSOR OPERACE
@@ -182,6 +214,11 @@ async def insert_sensor(
     VALUES (?, 
             (SELECT COALESCE(MAX(local_channel), 0) + 1 FROM Sensors WHERE deviceID = ?),
             ?, ?, ?, ?, ?)
+            ON CONFLICT(sensorName, deviceID)
+            DO UPDATE SET conversion_rule=excluded.conversion_rule,
+                          param_a=excluded.param_a,
+                          param_b=excluded.param_b,
+                          param_c=excluded.param_c
             RETURNING sensorID, local_channel;
     """,
     (
@@ -201,10 +238,82 @@ async def insert_sensor(
     await db.commit()
     return row
 
+# =========================
+# CONFIG OPERACE    
+# =========================
+
+async def insert_config(
+    deviceID,
+    typeMeasurement="CONTINUAL",
+    measIntervalHz=1):    
+    cursor = await db.execute("""
+    INSERT INTO configs (
+        deviceID,
+        typeMeasurement,
+        measIntervalHz
+    )
+    VALUES (?, ?, ?)
+    ON CONFLICT(deviceID) DO NOTHING
+    RETURNING typeMeasurement, measIntervalHz;
+    """,
+    (
+        deviceID,
+        typeMeasurement,
+        measIntervalHz
+    ))
+    row = await cursor.fetchone()
+    await cursor.close()
+
+    # pokud se nevložilo → načti existující config
+    if row is None:
+        cursor = await db.execute("""
+        SELECT typeMeasurement, measIntervalHz
+        FROM configs
+        WHERE deviceID = ?
+        """, (deviceID,))
+        
+        row = await cursor.fetchone()
+        await cursor.close()
+
+    await db.commit()
+    return row
+
+
+async def update_config(
+    deviceID,
+    typeMeasurement="CONTINUAL",
+    measIntervalHz=1
+):
+    cursor = await db.execute("""
+    UPDATE configs
+    SET typeMeasurement = COALESCE(?, typeMeasurement),
+        measIntervalHz = COALESCE(?, measIntervalHz)
+    WHERE deviceID = ?
+    RETURNING typeMeasurement, measIntervalHz;
+    """,
+    (
+        typeMeasurement,
+        measIntervalHz,
+        deviceID
+    ))
+    row = await cursor.fetchone()
+    await cursor.close()
+    await db.commit()
+    return row
+
+async def get_config(deviceID):
+
+    cursor = await db.execute("""
+    SELECT *
+    FROM configs
+    WHERE deviceID = ?
+    """,
+    (deviceID,))
+    return await cursor.fetchone()
 
 
 # =========================
-# MEASUREMENTS (KLÍČOVÉ)
+# MEASUREMENT OPERACE
 # =========================
 
 async def insert_measurement(

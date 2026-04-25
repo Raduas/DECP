@@ -1,12 +1,23 @@
 
+
+
+from pathlib import Path
+
+from fastapi import APIRouter, Request
 from .core import db
 from fastapi import FastAPI
 from .mqtt import clientMQTT
 import asyncio
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 
 app = FastAPI()
 
+
+
+
+templates = Jinja2Templates(directory="app/templates")
 
 
 @app.on_event("startup")
@@ -20,22 +31,15 @@ async def startup():
         clientMQTT.mqtt_loop()
     )
 
-"""
-@app.on_event("shutdown")
-async def shutdown():
+@app.get("/devices", response_class=HTMLResponse)
+async def list_devices(request: Request):
+    
+    devices = await db.get_all_devices()
 
-    # zastavení MQTT tasku
-    if hasattr(app.state, "mqtt_task"):
-        app.state.mqtt_task.cancel()
-
-        try:
-            await app.state.mqtt_task
-        except asyncio.CancelledError:
-            pass
-
-    # zavření databáze
-    await db.close_db()
-"""
+    return templates.TemplateResponse("devices.html", {
+            "request": request,
+            "devices": devices
+        })
 
 @app.get("/")
 def read_root():
@@ -45,3 +49,19 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
+
+
+
+
+
+@app.get("/config/{device_id}")
+async def get_device_config(device_id: str):
+    config = await db.get_config(device_id)
+    if config:
+        return {
+            "deviceID": config["deviceID"],
+            "typeMeasurement": config["typeMeasurement"],
+            "measIntervalHz": config["measIntervalHz"]
+        }
+    else:
+        return {"error": "Device not found"}

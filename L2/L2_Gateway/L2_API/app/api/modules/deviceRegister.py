@@ -11,7 +11,8 @@ async def device_register(data):
     if not device_mac:
         print("Missing MAC")
         return
-
+    print("DATA:", data)
+    print("MAC:", data.get("mac") if data else None)
     new_text_id = f"DEV_{int(time()*1000)}" # Vygenerujeme provizorní ID pro př ípad, že je to nové zařízení
     small_id = 1
 
@@ -23,7 +24,8 @@ async def device_register(data):
             return
 
         actual_device_id = result_device["id"]    
-        local_channel = 1 
+        config = await db.insert_config(actual_device_id) # 1.1 Vytvoření výchozí konfigurace pro nové zařízení
+        
         senzor_name = data.get("sensorType", "Unknown_Sensor")
         
         result_sensor = await db.insert_sensor(actual_device_id, 
@@ -35,7 +37,8 @@ async def device_register(data):
         
         response_payload = {
             **dict(result_device),
-            **dict(result_sensor)
+            **dict(result_sensor),
+            **dict(config)
         }# Převedeme je na standardní dict a spojíme je.
         print(f"Registered device: {response_payload}")
     
