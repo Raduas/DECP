@@ -6,31 +6,21 @@
 </head>
 
 <body>
-
     <h2>Device: {{ deviceID }}</h2>
-
     <label>Type:</label>
-
     <select id="typeMeasurement">
-
         <option value="CONTINUAL" {% if config.typeMeasurement=="CONTINUAL" %} selected {% endif %}>
             CONTINUAL
         </option>
-
         <option value="SESSION" {% if config.typeMeasurement=="SESSION" %} selected {% endif %}>
             SESSION
         </option>
-
     </select>
 
 
     <br><br>
-
     <label>Interval (Hz):</label>
-
     <input type="number" id="hz" value="{{ config.measIntervalHz }}" min="1" max="1000" />
-
-
     <br><br>
 
     <button onclick="sendConfig()">
@@ -39,38 +29,24 @@
 
 
     <script>
-
         async function sendConfig() {
-
             const data = {
-
                 deviceID: "{{ deviceID }}",
-
                 typeMeasurement:
                     document.getElementById("typeMeasurement").value,
-
                 measIntervalHz:
                     parseInt(document.getElementById("hz").value)
             };
-
-            await fetch("/config/update", {
-
+            await fetch("/devices/config/update", {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json"
                 },
-
                 body: JSON.stringify(data)
-
             });
-
             alert("Config updated");
-
         }
-
     </script>
-
 </body>
 
 </html>

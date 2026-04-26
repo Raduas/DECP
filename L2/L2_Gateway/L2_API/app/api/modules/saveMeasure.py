@@ -2,7 +2,7 @@
 import json
 from time import time
 from app.core import db
-from app.mqtt.publishMQTT import send_response
+from L2.L2_Gateway.L2_API.app.api.mqtt.publishMQTT import send_response
 
 async def meas_register(data):
     sensorID = data.get("local_channel")

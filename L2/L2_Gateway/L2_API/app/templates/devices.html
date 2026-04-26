@@ -6,46 +6,32 @@
 </head>
 
 <body>
-
     <h2>Registered Devices</h2>
-
     <table border="1" cellpadding="8">
-
         <tr>
             <th>Name</th>
             <th>MAC</th>
             <th>Status</th>
             <th>Config</th>
         </tr>
-
         {% for d in devices %}
-
         <tr>
-
             <td>
                 {{ d.deviceName }}
             </td>
-
             <td>
                 {{ d.mac_address }}
             </td>
-
             <td>
                 {{ d.status }}
             </td>
-
             <td>
-
-                <a href="/config/{{ d.id }}">
+                <a href="/devices/config/{{ d.id }}">
                     Open Config
                 </a>
-
             </td>
-
         </tr>
-
         {% endfor %}
-
     </table>
 
 </body>
