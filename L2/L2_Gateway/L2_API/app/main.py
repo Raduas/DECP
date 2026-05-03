@@ -1,14 +1,13 @@
 
-from fastapi import APIRouter, Request
 from app.core import db
 from fastapi import FastAPI
 from app.api.mqtt import clientMQTT
 import asyncio
+from app.api.mainRouter import api_router
 
-from app.api import APIRouter
 app = FastAPI()
 
-app.include_router(APIRouter())
+app.include_router(api_router)
 
 
 @app.on_event("startup")

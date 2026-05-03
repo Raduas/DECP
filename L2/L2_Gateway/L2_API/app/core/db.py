@@ -1,3 +1,5 @@
+from time import time
+
 import aiosqlite
 
 DB_PATH = "/app/database/L2.db"
@@ -32,8 +34,10 @@ async def init_db():
     CREATE TABLE IF NOT EXISTS configs (
         deviceID TEXT PRIMARY KEY,
         typeMeasurement TEXT CHECK(typeMeasurement IN ('SESSION', 'CONTINUAL')) default 'CONTINUAL',
-        measIntervalHz INT default 1,
-
+        measIntervalHz REAL default 0.2,
+        isDirty BOOLEAN DEFAULT 0,
+        lastSync TIMESTAMP,
+                     
         FOREIGN KEY (deviceID)
             REFERENCES DeviceL1(id)
     );
@@ -169,6 +173,17 @@ async def get_device_by_mac(mac):
 
     return await cursor.fetchone()
 
+async def get_mac_by_id(device_id):
+
+    cursor = await db.execute("""
+    SELECT mac_address
+    FROM DeviceL1
+    WHERE id = ?
+    """,
+    (device_id,))
+
+    return await cursor.fetchone()
+
 async def get_all_devices():
 
     cursor = await db.execute("""
@@ -245,7 +260,7 @@ async def insert_sensor(
 async def insert_config(
     deviceID,
     typeMeasurement="CONTINUAL",
-    measIntervalHz=1):    
+    measIntervalHz=0.2):    
     cursor = await db.execute("""
     INSERT INTO configs (
         deviceID,
@@ -282,18 +297,21 @@ async def insert_config(
 async def update_config(
     deviceID,
     typeMeasurement="CONTINUAL",
-    measIntervalHz=1
+    measIntervalHz=0.2,
+    isDirty=1
 ):
     cursor = await db.execute("""
     UPDATE configs
     SET typeMeasurement = COALESCE(?, typeMeasurement),
-        measIntervalHz = COALESCE(?, measIntervalHz)
+        measIntervalHz = COALESCE(?, measIntervalHz),
+        isDirty = ?
     WHERE deviceID = ?
     RETURNING typeMeasurement, measIntervalHz;
     """,
     (
         typeMeasurement,
         measIntervalHz,
+        isDirty,
         deviceID
     ))
     row = await cursor.fetchone()
@@ -359,3 +377,11 @@ async def insert_measurements_batch(data):
     """, data)
 
     await db.commit()
+
+async def on_ack_received(mac):
+    await db.execute(
+        "UPDATE configs SET isDirty = 0, lastSync = ? WHERE deviceID = (SELECT id FROM DeviceL1 WHERE mac_address = ?)",
+        (int(time()), mac)
+    )
+    await db.commit()
+    print(f"Konfigurace pro {mac} byla úspěšně synchronizována.")

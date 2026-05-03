@@ -1,8 +1,8 @@
 from asyncio_mqtt import Client
 import asyncio
-from ...mqtt import routerMQTT
+from app.api.mqtt import routerMQTT
 
-TOPICS = ["l1/test", "l1/registration"]
+TOPICS = ["l1/test", "l1/registration", "l1/config_ack/+"]
 
 
 

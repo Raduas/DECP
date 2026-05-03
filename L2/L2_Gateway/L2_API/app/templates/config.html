@@ -20,7 +20,7 @@
 
     <br><br>
     <label>Interval (Hz):</label>
-    <input type="number" id="hz" value="{{ config.measIntervalHz }}" min="1" max="1000" />
+    <input type="number" id="hz" name="measIntervalHz" value="{{ config.measIntervalHz }}" step="any" />
     <br><br>
 
     <button onclick="sendConfig()">
@@ -35,7 +35,7 @@
                 typeMeasurement:
                     document.getElementById("typeMeasurement").value,
                 measIntervalHz:
-                    parseInt(document.getElementById("hz").value)
+                    parseFloat(document.getElementById("hz").value)
             };
             await fetch("/devices/config/update", {
                 method: "POST",
