@@ -13,7 +13,7 @@ app.include_router(api_router)
 @app.on_event("startup")
 async def startup():
     await db.init_db()      # inicializace databáze
-    asyncio.create_task(    # spuštění MQTT loopu na pozadí
+    asyncio.create_task(    
         clientMQTT.mqtt_loop()
     )
 
