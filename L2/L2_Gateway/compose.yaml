@@ -12,7 +12,7 @@ services:
       - ./L2_data:/app/database
     depends_on:
       - mqtt5
-    #command: "true"
+
 
   node-red:
     image: nodered/node-red:latest
@@ -36,12 +36,10 @@ services:
       - "8080:8080"
     volumes:
       - ./L2_data:/data
-    # Tady musíš zadat přesný název tvého DB souboru! 
-    # Podle předchozích zpráv se jmenuje L2gateway.db
     entrypoint: sqlite_web -H 0.0.0.0 -p 8080 /data/L2.db
     depends_on:
       - api
-    #command: "true"
+
 
 
   mqtt5:
@@ -56,41 +54,14 @@ services:
       - ./L2_MQTT/log:/L2_MQTT/log:rw
     
     restart: always
-
-  #ml:
-    #image: tensorflow/tensorflow:2.3.0-gpu
-    # Make Docker create the container with NVIDIA Container Toolkit
-    # You don't need it if you set 'nvidia' as the default runtime in
-    # daemon.json.
-   # runtime: nvidia
-    # the lines below are here just to test that TF can see GPUs
-    #entrypoint:
-   #   - /usr/local/bin/python
-   #   - -c
-   # command:
-   #   - "import tensorflow as tf; tf.test.is_gpu_available(cuda_only=False, min_cuda_compute_capability=None)"
-
-
-
+    
   ml:
-    #image: my-ml-app:latest
     build: ./L2_ML
     ports:
       - 8880:8880
     runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all          # nebo count: 1
-              capabilities: [gpu]
-
-      #- workspace:/workspace
-      #- data:/data
+    volumes:
+      - ./L2_data:/app/database
 
 # volumes for mapping data,config and log
 volumes:

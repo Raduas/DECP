@@ -1,0 +1,31 @@
+services:
+  ml-cv: #NEED DOCKERFILE
+    build: ./ML/CV
+    ports:
+      - "8880:8880"
+    runtime: nvidia
+    volumes:
+      - ./ML/CV:/code/app
+    depends_on:
+      - POSTGRESQL #REPAIR: AFTER ADD DATABASE SERVICE
+
+
+  traefik:   #anly added by vscode devcontainer, need audit
+    image: traefik:v2.9
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+
+
+networks:
+  net:
+    name: net
+  default:
+    name: network
