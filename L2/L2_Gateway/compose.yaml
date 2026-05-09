@@ -33,10 +33,10 @@ services:
     container_name: sqlite-web
     restart: always
     ports:
-      - "8080:8080"
+      - "8089:8089"
     volumes:
       - ./L2_data:/data
-    entrypoint: sqlite_web -H 0.0.0.0 -p 8080 /data/L2.db
+    entrypoint: sqlite_web -H 0.0.0.0 -p 8089 /data/L2.db
     depends_on:
       - api
 
@@ -54,14 +54,7 @@ services:
       - ./L2_MQTT/log:/L2_MQTT/log:rw
     
     restart: always
-    
-  ml:
-    build: ./L2_ML
-    ports:
-      - 8880:8880
-    runtime: nvidia
-    volumes:
-      - ./L2_data:/app/database
+
 
 # volumes for mapping data,config and log
 volumes:

@@ -1,7 +1,7 @@
 
 import json
 from time import time
-from app.core import db
+from app.core.dbOperations.measurements_db import insert_measurement
 from app.api.mqtt.publishMQTT import send_response
 
 async def meas_register(data):
@@ -14,7 +14,7 @@ async def meas_register(data):
     #meas = await db_insert_measurement(sensorID, status=0, raw_value=raw, calc_value=calc_value)
     status = 1 if raw is None else 0
     timestamp = int(time()*1000)
-    await db.insert_measurement(
+    await insert_measurement(
         timestamp=timestamp, 
         sensorID=sensorID, 
         raw_value=raw, 

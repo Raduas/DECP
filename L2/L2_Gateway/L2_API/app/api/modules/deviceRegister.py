@@ -1,7 +1,7 @@
 
 import json
 from time import time
-from app.core import db
+from app.core.dbOperations import device_db
 from app.api.mqtt.publishMQTT import send_response
 
 async def device_register(data):
@@ -18,7 +18,7 @@ async def device_register(data):
 
     try:
         
-        result_device = await db.insert_device(new_text_id, device_mac, device_name, small_id) # 1. Registrace / Aktualizace zařízení
+        result_device = await device.insert_device(new_text_id, device_mac, device_name, small_id) # 1. Registrace / Aktualizace zařízení
         if not result_device:
             print("Chyba DB: Zařízení se nepodařilo uložit.")
             return

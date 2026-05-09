@@ -4,7 +4,9 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from app.core import db
+from app.core.dbOperations import deviceconfig_db
+from app.core.dbOperations import device_db
+
 from fastapi import APIRouter
 from app.api.mqtt.publishMQTT import send_response
 
@@ -20,7 +22,7 @@ class ConfigUpdate(BaseModel):
 @router.get("/", response_class=HTMLResponse)
 async def list_devices(request: Request):
     
-    devices = await db.get_all_devices()
+    devices = await device_db.get_all_devices()
 
     return templates.TemplateResponse("devices.html", {
             "request": request,
@@ -31,7 +33,7 @@ async def list_devices(request: Request):
 @router.get("/config/{deviceID}", response_class=HTMLResponse)
 async def config_page(request: Request, deviceID: str):
 
-    config = await db.get_config(deviceID)
+    config = await deviceconfig_db.get_config(deviceID)
 
     return templates.TemplateResponse(
         "config.html",
@@ -47,13 +49,13 @@ async def config_page(request: Request, deviceID: str):
 @router.post("/config/update")
 async def update_config_api(cfg: ConfigUpdate):
 
-    result = await db.update_config(
+    result = await deviceconfig_db.update_config(
         deviceID=cfg.deviceID,
         typeMeasurement=cfg.typeMeasurement,
         measIntervalHz = cfg.measIntervalHz,
         isDirty = 1
     )
-    mac = await db.get_mac_by_id(cfg.deviceID)
+    mac = await device_db.get_mac_by_id(cfg.deviceID)
     payload = {
         "typeMeasurement": cfg.typeMeasurement,
         "measIntervalHz": cfg.measIntervalHz

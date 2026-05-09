@@ -1,5 +1,5 @@
 import json
-from app.core.db import on_ack_received
+from app.core.dbOperations.measurements_db import on_ack_received
 from app.api.modules.saveMeasure import meas_register
 from app.api.modules.deviceRegister import device_register
 
