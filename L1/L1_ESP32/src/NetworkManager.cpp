@@ -12,6 +12,7 @@ void NetworkManager::init()
     WiFi.mode(WIFI_STA);
     appData.macAddress = WiFi.macAddress();
     mqttClient.setServer(MQTT_SERVER, 1883);
+    mqttClient.setBufferSize(1024);
     mqttClient.setCallback(mqttCallbackWrapper);
 }
 
@@ -68,20 +69,72 @@ void NetworkManager::sendRegistration()
     mqttClient.publish("l1/registration", payload.c_str());
 }
 
+void NetworkManager::sendtemp(float temp)
+{
+    String payload = "{\"device_id\":\"" + String(appData.small_id) +
+                     "\",\"local_channel\":\"" + String(appData.local_channel) +
+                     "\",\"temp\":" + String(temp) + "}"; // change to raw value
+    String topic = "l1/test";
+    mqttClient.publish(topic.c_str(), payload.c_str());
+}
 void NetworkManager::sendMeasurement(float temp)
 {
     String payload = "{\"device_id\":\"" + String(appData.small_id) +
                      "\",\"local_channel\":\"" + String(appData.local_channel) +
-                     "\",\"temp\":" + String(temp) + "}";
-    mqttClient.publish("l1/test", payload.c_str());
+                     "\",\"temp\":" + String(temp) + "}"; // change to raw value
+    String topic = "l1/measurement/cont/stream/" + appData.macAddress;
+    mqttClient.publish(topic.c_str(), payload.c_str());
+    printf("Odesilam mereni: %s\n na topicu: %s", payload.c_str(), topic.c_str());
 }
-
+void NetworkManager::sendBatchMeasurement(int *measurements, int count)
+{
+    JsonDocument doc;
+    doc["device_id"] = appData.small_id;
+    doc["local_channel"] = appData.local_channel;
+    JsonArray arr = doc.createNestedArray("measurements");
+    for (int i = 0; i < count; i++)
+    {
+        arr.add(measurements[i]);
+    }
+    char buffer[1024];
+    serializeJson(doc, buffer);
+    String topic = "l1/measurement/cont/batch/" + appData.macAddress;
+    mqttClient.publish(topic.c_str(), buffer);
+    printf("Odesilam batch mereni: %s\n na topicu: %s", buffer, topic.c_str());
+}
+void NetworkManager::sendMeasurementSession(float temp)
+{
+    String payload = "{\"device_id\":\"" + String(appData.small_id) +
+                     "\",\"local_channel\":\"" + String(appData.local_channel) +
+                     "\",\"sessionName\":\"" + String(appData.sessionName) +
+                     "\",\"temp\":" + String(temp) + "}"; // change to raw value
+    String topic = "l1/measurement/session/stream/" + appData.macAddress;
+    mqttClient.publish(topic.c_str(), payload.c_str());
+    printf("Odesilam mereni: %s\n na topicu: %s", payload.c_str(), topic.c_str());
+}
+void NetworkManager::sendBatchMeasurementSession(int *measurements, int count)
+{
+    JsonDocument doc;
+    doc["device_id"] = appData.small_id;
+    doc["local_channel"] = appData.local_channel;
+    doc["sessionName"] = appData.sessionName;
+    JsonArray arr = doc.createNestedArray("measurements");
+    for (int i = 0; i < count; i++)
+    {
+        arr.add(measurements[i]);
+    }
+    char buffer[1024];
+    serializeJson(doc, buffer);
+    String topic = "l1/measurement/session/batch/" + appData.macAddress;
+    mqttClient.publish(topic.c_str(), buffer);
+    printf("Odesilam batch mereni: %s\n na topicu: %s", buffer, topic.c_str());
+}
 void NetworkManager::sendConfigAck()
 {
     JsonDocument doc;
     doc["deviceID"] = appData.macAddress;
     doc["status"] = "ok";
-    char buffer[128];
+    char buffer[1024];
     serializeJson(doc, buffer);
     String topic = "l1/config_ack/" + appData.macAddress;
     mqttClient.publish(topic.c_str(), buffer);
@@ -103,6 +156,7 @@ void NetworkManager::handleCallback(char *topic, byte *message, unsigned int len
     {
         msg += (char)message[i];
     }
+
     Serial.println("Prijata zprava na [" + String(topic) + "]: " + msg);
 
     String topicStr = String(topic);
@@ -115,25 +169,47 @@ void NetworkManager::handleCallback(char *topic, byte *message, unsigned int len
         appData.local_channel = doc["local_channel"];
 
         String typeMeasString = doc["typeMeasurement"].as<String>();
-        appData.typeMeas = (typeMeasString == "CONTINUAL");
+        String isBatchString = doc["measContinuity"].as<String>();
 
+        appData.typeMeas = (typeMeasString == "CONTINUAL"); // false = SESSION, true = CONTINUAL
+        appData.isBatch = (isBatchString == "BATCH");
+        Serial.println(" isBatch: " + String(appData.isBatch));
         float hz = doc["measIntervalHz"];
         appData.measureInterval = (hz > 0.0) ? (1000.0 / hz) : 100000;
+        if (appData.measureInterval > appData.sendInterval)
+        {
+            appData.sendInterval = appData.measureInterval; // pokud je měřicí interval delší než interval odesílání
+        }
         appData.isRegistered = true;
+        appData.configReceived = true;
     }
     else if (topicStr == "l2/config/" + appData.macAddress)
     {
         String typeMeasString = doc["typeMeasurement"].as<String>();
-        appData.typeMeas = (typeMeasString == "CONTINUAL");
-
+        appData.typeMeas = (typeMeasString == "CONTINUAL"); // false = SESSION, true = CONTINUAL
+        if (typeMeasString == "CONTINUAL")
+        {
+            currentState = MEASURING_CONT; // Přechod do WAITING_CONFIG, kde se zkontroluje, zda máme všechny potřebné informace pro přechod do měření
+        }
+        else if (typeMeasString == "SESSION")
+        {
+            currentState = MEASURING_START; // Přechod do MEASURING_START, kde se čeká na startovací příznak z L1
+            appData.sessionName = doc["sessionName"].as<String>();
+        }
+        printf("Received config: typeMeasurement=%s, sessionName=%s\n", typeMeasString.c_str(), appData.sessionName.c_str());
+        String isBatchString = doc["measContinuity"].as<String>();
+        appData.isBatch = (isBatchString == "BATCH");
         float hz = doc["measIntervalHz"];
         appData.measureInterval = (hz > 0.0) ? (1000.0 / hz) : 100000;
-
+        if (appData.measureInterval > appData.sendInterval)
+        {
+            appData.sendInterval = appData.measureInterval; // pokud je měřicí interval delší než interval odesílání
+        }
         sendConfigAck();
-        appData.configReceived = true; // Flag pro změnu stavu v main.cpp
+        appData.configReceived = true;
     }
     else if (topicStr == "l1/start/" + appData.macAddress)
     {
-        appData.start = doc["start"];
+        appData.start = doc["is_active"];
     }
 }

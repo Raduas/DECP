@@ -1,4 +1,4 @@
-from app.core.db import db
+from app.core import db as db_module
 
 # =========================
 # SENSOR OPERACE
@@ -15,7 +15,7 @@ async def insert_sensor(
     #sensor_class="ANALOG"
 ):
 
-    cursor = await db.execute("""
+    cursor = await db_module.db.execute("""
     INSERT INTO Sensors (
         deviceID,
         local_channel,
@@ -49,5 +49,5 @@ async def insert_sensor(
 
     row = await cursor.fetchone()   # ← POVINNÉ
     await cursor.close()
-    await db.commit()
+    await db_module.db.commit()
     return row

@@ -52,8 +52,8 @@ services:
       - ./L2_MQTT/config:/L2_MQTT/config:rw
       - ./L2_MQTT/data:/L2_MQTT/data:rw
       - ./L2_MQTT/log:/L2_MQTT/log:rw
-    
     restart: always
+    
 
 
 # volumes for mapping data,config and log

@@ -35,11 +35,17 @@ async def init_db():
         measIntervalHz REAL default 0.2,
         isDirty BOOLEAN DEFAULT 0,
         lastSync TIMESTAMP,
+        measContinuity TEXT CHECK(measContinuity IN ('STREAM', 'BATCH')) DEFAULT 'STREAM',
+        is_active BOOLEAN DEFAULT 0,
                      
         FOREIGN KEY (deviceID)
             REFERENCES DeviceL1(id)
     );
     """)
+ 
+    #await db.execute("""
+    #     ALTER TABLE configs ADD COLUMN is_active BOOLEAN DEFAULT 0;            
+    #""")
 
     # ---------- Sensors ----------
     await db.execute("""
@@ -100,6 +106,36 @@ async def init_db():
     ON Measurements(timestamp);
     """)
 
+    await db.execute("""
+    CREATE TABLE IF NOT EXISTS Session_Measurements (
+        timestamp BIGINT NOT NULL,
+        sensorID INT NOT NULL,
+        SessionName VARCHAR(50) NOT NULL,
+        status TINYINT DEFAULT 0,
+        raw_value INTEGER,
+        calc_value REAL,
+
+        PRIMARY KEY (timestamp, sensorID),
+
+        FOREIGN KEY (sensorID)
+            REFERENCES Sensors(sensorID)
+    );
+    """)
+
+    # index pro výkon (velmi důležité)
+    await db.execute("""
+    CREATE INDEX IF NOT EXISTS idx_session_measurements_sensor
+    ON Session_Measurements(sensorID);
+    """)
+
+    await db.execute("""
+    CREATE INDEX IF NOT EXISTS idx_session_measurements_timestamp
+    ON Session_Measurements(timestamp);
+    """)
+    await db.execute("""
+    CREATE INDEX IF NOT EXISTS idx_session_measurements_SessionName
+    ON Session_Measurements(SessionName);
+    """)
     await db.commit()
 
 # =========================

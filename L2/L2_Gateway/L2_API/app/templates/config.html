@@ -1,52 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 
 <head>
+    <meta charset="UTF-8">
     <title>Device Config</title>
+    <script src="{{ url_for('js', path='config.js') }}" defer></script>
 </head>
 
-<body>
+<body data-device-id="{{ deviceID }}">
+
     <h2>Device: {{ deviceID }}</h2>
-    <label>Type:</label>
-    <select id="typeMeasurement">
-        <option value="CONTINUAL" {% if config.typeMeasurement=="CONTINUAL" %} selected {% endif %}>
-            CONTINUAL
-        </option>
-        <option value="SESSION" {% if config.typeMeasurement=="SESSION" %} selected {% endif %}>
-            SESSION
-        </option>
-    </select>
+    <section>
+        <label>Type:</label>
+        <select id="typeMeasurement">
+            <option value="CONTINUAL" {% if config.typeMeasurement=="CONTINUAL" %} selected {% endif %}>CONTINUAL
+            </option>
+            <option value="SESSION" {% if config.typeMeasurement=="SESSION" %} selected {% endif %}>SESSION</option>
+        </select>
 
+        <div id="sessionBlock" style="display:none;">
+            <label>Start:</label>
+            <button id="startBtn" data-running="{{ 'true' if config.sessionRunning else 'false' }}">
+                {{ "STOP" if config.sessionRunning else "START" }}
+            </button>
 
-    <br><br>
-    <label>Interval (Hz):</label>
-    <input type="number" id="hz" name="measIntervalHz" value="{{ config.measIntervalHz }}" step="any" />
-    <br><br>
+            <br><br>
 
-    <button onclick="sendConfig()">
-        UPDATE CONFIG
-    </button>
+            <label>Session Name:</label>
+            <input type="text" id="sessionText" value="{{ config.sessionName or '' }}" />
+        </div>
 
+        <br><br>
+        <label>Sending in batches</label>
+        <select id="measContinuity">
+            <option value="STREAM" {% if config.measContinuity=="STREAM" %} selected {% endif %}>STREAM</option>
+            <option value="BATCH" {% if config.measContinuity=="BATCH" %} selected {% endif %}>BATCH</option>
+        </select>
 
-    <script>
-        async function sendConfig() {
-            const data = {
-                deviceID: "{{ deviceID }}",
-                typeMeasurement:
-                    document.getElementById("typeMeasurement").value,
-                measIntervalHz:
-                    parseFloat(document.getElementById("hz").value)
-            };
-            await fetch("/devices/config/update", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-            alert("Config updated");
-        }
-    </script>
+        <br><br>
+        <label>Interval (Hz):</label>
+        <input type="number" id="hz" name="measIntervalHz" value="{{ config.measIntervalHz }}" step="any" />
+
+        <br><br>
+        <button id="updateBtn">UPDATE CONFIG</button>
+    </section>
+
 </body>
 
 </html>

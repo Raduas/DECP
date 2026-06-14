@@ -2,7 +2,7 @@ from asyncio_mqtt import Client
 import asyncio
 from app.api.mqtt import routerMQTT
 
-TOPICS = ["l1/test", "l1/registration", "l1/config_ack/+"]
+TOPICS = ["l1/test", "l1/registration", "l1/config_ack/+", "l1/measurement/+", "l1/batch/+","l1/measurement/+/+/+"]
 
 
 

@@ -1,6 +1,5 @@
 from app.core import db as db_module
-
-
+from time import time
 # =========================
 # MEASUREMENT OPERACE
 # =========================
@@ -36,7 +35,7 @@ async def insert_measurement(
 
 async def insert_measurements_batch(data):
 
-    await db_module.executemany("""
+    await db_module.db.executemany("""
     INSERT INTO Measurements (
         timestamp,
         sensorID,
@@ -47,12 +46,60 @@ async def insert_measurements_batch(data):
     VALUES (?, ?, ?, ?, ?)
     """, data)
 
-    await db_module.commit()
+    await db_module.db.commit()
+
+
+async def insert_measurement_session(
+    timestamp,
+    sensorID,
+    sessionName,
+    raw_value,
+    calc_value=None,
+    status=0
+):
+
+    cursor = await db_module.db.execute("""
+    INSERT INTO Session_Measurements (
+        timestamp,
+        sensorID,
+        SessionName,
+        raw_value,
+        calc_value,
+        status
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    """,
+    (
+        timestamp,
+        sensorID,
+        sessionName,
+        raw_value,
+        calc_value,
+        status
+    ))
+    await db_module.db.commit()
+
+
+async def insert_measurements_batch_session(data):
+
+    await db_module.db.executemany("""
+    INSERT INTO Session_Measurements (
+        timestamp,
+        sensorID,
+        SessionName,                                
+        raw_value,
+        calc_value,
+        status
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, data)
+
+    await db_module.db.commit()
 
 async def on_ack_received(mac):
-    await db_module.execute(
+    await db_module.db.execute(
         "UPDATE configs SET isDirty = 0, lastSync = ? WHERE deviceID = (SELECT id FROM DeviceL1 WHERE mac_address = ?)",
         (int(time()), mac)
     )
-    await db_module.commit()
+    await db_module.db.commit()
     print(f"Konfigurace pro {mac} byla úspěšně synchronizována.")

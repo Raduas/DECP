@@ -12,14 +12,27 @@ NetworkManager network(appData);
 State currentState = INIT;
 unsigned long lastActionTime = 0;
 unsigned long lastMeasureTime = 0;
+unsigned long lastBatchSendTime = 0;
 const unsigned long TIMEOUT_MS = 10000;
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     sensor.init();
     network.init();
     Serial.println("System start. MAC: " + appData.macAddress);
+}
+
+bool checkConnection()
+{
+    if (!network.isConnected())
+    {
+        Serial.println("Chyba: Ztrata spojeni behem mereni!");
+        currentState = CONNECTING;
+        lastActionTime = millis();
+        return false;
+    }
+    return true;
 }
 
 void loop()
@@ -90,32 +103,67 @@ void loop()
             currentState = MEASURING_START;
         }
         else if (millis() - lastActionTime > TIMEOUT_MS)
-        {
+        { // error handling pro případ, že nedorazí registrace z L2
             Serial.println("Chyba: Timeout registrace z L2. Zkousim znovu...");
             currentState = REGISTERING;
         }
         break;
 
     case MEASURING_CONT:
-    case MEASURING_START:
-        if (!network.isConnected())
+        if (!checkConnection())
         {
-            Serial.println("Chyba: Ztrata spojeni behem mereni!");
-            currentState = CONNECTING;
-            lastActionTime = millis();
             break;
         }
+        if (millis() - lastMeasureTime >= appData.measureInterval)
+        {
+            lastMeasureTime = millis();
+            float temp = sensor.getTemperature();
+            if (appData.isBatch)
+            {
+                appData.batchMeasurements[appData.currentBatchCount] = temp;
+                appData.currentBatchCount++;
+                if (appData.currentBatchCount >= batchLimit or (appData.currentBatchCount > 0 && millis() - lastBatchSendTime >= appData.sendInterval))
+                {
+                    network.sendBatchMeasurement(appData.batchMeasurements, appData.currentBatchCount);
+                    appData.currentBatchCount = 0;
+                    lastBatchSendTime = millis();
+                }
+            }
+            else
+            {
+                network.sendMeasurement(temp);
+            }
+        }
+        break;
 
+    case MEASURING_START:
+        if (!checkConnection())
+        {
+            break;
+        }
         // Podmínka pro měření: (Kontinuální) NEBO (Session + start flag)
-        if (currentState == MEASURING_CONT || (currentState == MEASURING_START && appData.start))
+        if (appData.start)
         {
             if (millis() - lastMeasureTime >= appData.measureInterval)
             {
                 lastMeasureTime = millis();
 
                 float temp = sensor.getTemperature();
-                Serial.printf("Mereni: %.2f C\n", temp);
-                network.sendMeasurement(temp);
+                if (appData.isBatch)
+                {
+                    appData.batchMeasurements[appData.currentBatchCount] = temp;
+                    appData.currentBatchCount++;
+                    if (appData.currentBatchCount >= batchLimit or (appData.currentBatchCount > 0 && millis() - lastBatchSendTime >= appData.sendInterval))
+                    {
+                        network.sendBatchMeasurementSession(appData.batchMeasurements, appData.currentBatchCount);
+                        appData.currentBatchCount = 0;
+                        lastBatchSendTime = millis();
+                    }
+                }
+                else
+                {
+                    network.sendMeasurementSession(temp);
+                }
             }
         }
         break;

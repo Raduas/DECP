@@ -1,10 +1,10 @@
 #pragma once
+
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "secrets.h"
 #include "Config.h"
-
 class NetworkManager
 {
 public:
@@ -17,6 +17,10 @@ public:
 
     void sendRegistration();
     void sendMeasurement(float temp);
+    void sendtemp(float temp);
+    void sendBatchMeasurement(int *measurements, int count);
+    void sendMeasurementSession(float temp);
+    void sendBatchMeasurementSession(int *measurements, int count);
 
 private:
     AppData &appData;

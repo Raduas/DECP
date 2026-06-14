@@ -1,5 +1,6 @@
 import json
 
+from fastapi.staticfiles import StaticFiles
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
@@ -17,6 +18,9 @@ class ConfigUpdate(BaseModel):
     deviceID: str
     typeMeasurement: str | None = None
     measIntervalHz: float | None = None
+    measContinuity: str | None = None
+    sessionName: str | None = None
+
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -44,7 +48,6 @@ async def config_page(request: Request, deviceID: str):
         }
     )
 
-
 # Aktualizace configu
 @router.post("/config/update")
 async def update_config_api(cfg: ConfigUpdate):
@@ -53,13 +56,43 @@ async def update_config_api(cfg: ConfigUpdate):
         deviceID=cfg.deviceID,
         typeMeasurement=cfg.typeMeasurement,
         measIntervalHz = cfg.measIntervalHz,
+        measContinuity=cfg.measContinuity,
         isDirty = 1
     )
+
     mac = await device_db.get_mac_by_id(cfg.deviceID)
-    payload = {
-        "typeMeasurement": cfg.typeMeasurement,
-        "measIntervalHz": cfg.measIntervalHz
-    }
+    if cfg.sessionName is not None:
+        payload = {
+            "typeMeasurement": cfg.typeMeasurement,
+            "measIntervalHz": cfg.measIntervalHz,
+            "measContinuity": cfg.measContinuity,
+            "sessionName": cfg.sessionName
+        }
+    else:
+        payload = {
+            "typeMeasurement": cfg.typeMeasurement,
+            "measIntervalHz": cfg.measIntervalHz,
+            "measContinuity": cfg.measContinuity
+        }
     await send_response(topic=f"l2/config/{mac['mac_address']}",payload=json.dumps(payload))
 
+    return {"status": "sent"}
+
+
+
+class SessionStart(BaseModel):
+    deviceID: str
+    start: bool
+
+@router.post("/config/start-session")
+async def start_session_api(start: SessionStart):
+    result = await deviceconfig_db.set_active(
+        deviceID=start.deviceID,
+        is_active=start.start
+    )
+    payload = {
+        "is_active": start.start
+    }
+    mac = await device_db.get_mac_by_id(start.deviceID)
+    await send_response(topic=f"l1/start/{mac['mac_address']}",payload=json.dumps(payload))
     return {"status": "sent"}

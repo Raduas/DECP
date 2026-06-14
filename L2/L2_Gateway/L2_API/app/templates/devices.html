@@ -12,7 +12,9 @@
             <th>Name</th>
             <th>MAC</th>
             <th>Status</th>
+            <th>Sensor Type</th>
             <th>Config</th>
+
         </tr>
         {% for d in devices %}
         <tr>
@@ -24,6 +26,9 @@
             </td>
             <td>
                 {{ d.status }}
+            </td>
+            <td>
+                {{ d.sensorType }} DOPLNIT odkaz na sensor type ve vnitř odkas na graf hodnot
             </td>
             <td>
                 <a href="/devices/config/{{ d.id }}">
