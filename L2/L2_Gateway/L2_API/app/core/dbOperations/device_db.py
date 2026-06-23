@@ -69,16 +69,19 @@ async def get_mac_by_id(device_id):
 async def get_all_devices():
 
     cursor = await db_module.db.execute("""
-    SELECT id,
-           mac_address,
-           deviceName,
-           short_id,
-           status
-    FROM DeviceL1
-    ORDER BY deviceName;
-    """)
+        SELECT DeviceL1.id,
+            DeviceL1.mac_address,
+            DeviceL1.deviceName,
+            Sensors.sensorName
+        FROM  Sensors
+        LEFT JOIN DeviceL1
+            ON DeviceL1.id = Sensors.deviceID
+        ORDER BY DeviceL1.deviceName;
+        """)
 
     rows = await cursor.fetchall()
+    for row in rows:
+        print(dict(row))
     await cursor.close()
 
     return rows

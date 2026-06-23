@@ -5,46 +5,62 @@
     <meta charset="UTF-8">
     <title>Device Config</title>
     <script src="{{ url_for('js', path='config.js') }}" defer></script>
+    <link href="/css/mainPage.css" rel="stylesheet">
 </head>
 
 <body data-device-id="{{ deviceID }}">
+    <div class="screen">
+        <nav class="main-menu">
+            <menu>
+                <li class="main-menu1"><a href="#">WelcomePage(iprove Name)</a></li>
+                <li class="main-menu2"><a href="/devices">Devices + Sensors</a></li>
+                <li class="main-menu3"><a href="#">Measurements</a></li>
+                <li class="main-menu4"><a href="#">Graphs</a></li>
+                <li></li>
+                <li class="main-menu20"><a href="#">Settings</a></li>
+                <li class="main-menu21"><a href="#">About</a></li>
+            </menu>
+        </nav>
+        <main class="content">
+            <h2>Device: {{ deviceID }}</h2>
+            <section>
+                <label>Type:</label>
+                <select id="typeMeasurement">
+                    <option value="CONTINUAL" {% if config.typeMeasurement=="CONTINUAL" %} selected {% endif %}>
+                        CONTINUAL
+                    </option>
+                    <option value="SESSION" {% if config.typeMeasurement=="SESSION" %} selected {% endif %}>SESSION
+                    </option>
+                </select>
 
-    <h2>Device: {{ deviceID }}</h2>
-    <section>
-        <label>Type:</label>
-        <select id="typeMeasurement">
-            <option value="CONTINUAL" {% if config.typeMeasurement=="CONTINUAL" %} selected {% endif %}>CONTINUAL
-            </option>
-            <option value="SESSION" {% if config.typeMeasurement=="SESSION" %} selected {% endif %}>SESSION</option>
-        </select>
+                <div id="sessionBlock" style="display:none;">
+                    <label>Start:</label>
+                    <button id="startBtn" data-running="{{ 'true' if config.sessionRunning else 'false' }}">
+                        {{ "STOP" if config.sessionRunning else "START" }}
+                    </button>
 
-        <div id="sessionBlock" style="display:none;">
-            <label>Start:</label>
-            <button id="startBtn" data-running="{{ 'true' if config.sessionRunning else 'false' }}">
-                {{ "STOP" if config.sessionRunning else "START" }}
-            </button>
+                    <br><br>
 
-            <br><br>
+                    <label>Session Name:</label>
+                    <input type="text" id="sessionText" value="{{ config.sessionName or '' }}" />
+                </div>
 
-            <label>Session Name:</label>
-            <input type="text" id="sessionText" value="{{ config.sessionName or '' }}" />
-        </div>
+                <br><br>
+                <label>Sending in batches</label>
+                <select id="measContinuity">
+                    <option value="STREAM" {% if config.measContinuity=="STREAM" %} selected {% endif %}>STREAM</option>
+                    <option value="BATCH" {% if config.measContinuity=="BATCH" %} selected {% endif %}>BATCH</option>
+                </select>
 
-        <br><br>
-        <label>Sending in batches</label>
-        <select id="measContinuity">
-            <option value="STREAM" {% if config.measContinuity=="STREAM" %} selected {% endif %}>STREAM</option>
-            <option value="BATCH" {% if config.measContinuity=="BATCH" %} selected {% endif %}>BATCH</option>
-        </select>
+                <br><br>
+                <label>Interval (Hz):</label>
+                <input type="number" id="hz" name="measIntervalHz" value="{{ config.measIntervalHz }}" step="any" />
 
-        <br><br>
-        <label>Interval (Hz):</label>
-        <input type="number" id="hz" name="measIntervalHz" value="{{ config.measIntervalHz }}" step="any" />
-
-        <br><br>
-        <button id="updateBtn">UPDATE CONFIG</button>
-    </section>
-
+                <br><br>
+                <button id="updateBtn">UPDATE CONFIG</button>
+            </section>
+        </main>
+    </div>
 </body>
 
 </html>

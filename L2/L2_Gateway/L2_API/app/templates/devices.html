@@ -3,42 +3,58 @@
 
 <head>
     <title>Devices</title>
+    <link href="/css/mainPage.css" rel="stylesheet">
 </head>
 
 <body>
-    <h2>Registered Devices</h2>
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Name</th>
-            <th>MAC</th>
-            <th>Status</th>
-            <th>Sensor Type</th>
-            <th>Config</th>
+    <div class="screen">
+        <nav class="main-menu">
+            <menu>
+                <li class="main-menu1"><a href="/">WelcomePage(iprove Name)</a></li>
+                <li class="main-menu2"><a href="/devices">Devices + Sensors</a></li>
+                <li class="main-menu3"><a href="#">Measurements</a></li>
+                <li class="main-menu4"><a href="#">Graphs</a></li>
+                <li></li>
+                <li class="main-menu20"><a href="#">Settings</a></li>
+                <li class="main-menu21"><a href="#">About</a></li>
+            </menu>
+        </nav>
+        <main>
+            <h2>Registered Devices</h2>
+            <table border="1" cellpadding="8">
+                <tr>
+                    <th>Name</th>
+                    <th>MAC</th>
+                    <th>Status</th>
+                    <th>Sensor Type</th>
+                    <th>Config</th>
 
-        </tr>
-        {% for d in devices %}
-        <tr>
-            <td>
-                {{ d.deviceName }}
-            </td>
-            <td>
-                {{ d.mac_address }}
-            </td>
-            <td>
-                {{ d.status }}
-            </td>
-            <td>
-                {{ d.sensorType }} DOPLNIT odkaz na sensor type ve vnitř odkas na graf hodnot
-            </td>
-            <td>
-                <a href="/devices/config/{{ d.id }}">
-                    Open Config
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-
+                </tr>
+                {% for d in devices %}
+                <tr>
+                    <td>
+                        {{ d.deviceName }}
+                    </td>
+                    <td>
+                        {{ d.mac_address }}
+                    </td>
+                    <td>
+                        {{ d.status }}
+                    </td>
+                    <td><a href="#">
+                            {{ d.sensorName }} graf hodnot
+                        </a>
+                    </td>
+                    <td>
+                        <a href="/devices/config/{{ d.id }}">
+                            Open Config
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </main>
+    </div>
 </body>
 
 </html>

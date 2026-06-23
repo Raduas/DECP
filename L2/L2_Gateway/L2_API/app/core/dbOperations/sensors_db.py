@@ -51,3 +51,13 @@ async def insert_sensor(
     await cursor.close()
     await db_module.db.commit()
     return row
+
+
+async def get_all_sensors():
+    cursor= await db_module.db.execute("""
+        SELECT sensorName
+        FROM Sensors
+    """)
+    rows = await cursor.fetchall()
+    await cursor.close()
+    return rows
