@@ -103,3 +103,17 @@ async def on_ack_received(mac):
     )
     await db_module.db.commit()
     print(f"Konfigurace pro {mac} byla úspěšně synchronizována.")
+
+async def get_measurements_by_sensor(sensorName):
+    cursor = await db_module.db.execute("""
+    SELECT timestamp, raw_value, calc_value, Null as SessionName, status
+    FROM Measurements
+    WHERE SensorID = (SELECT sensorID FROM Sensors WHERE sensorName = ?)
+        UNION
+    SELECT timestamp, raw_value, calc_value, SessionName, status
+    FROM Session_Measurements
+    WHERE SensorID = (SELECT sensorID FROM Sensors WHERE sensorName = ?)
+    """, (sensorName, sensorName))
+    rows = await cursor.fetchall()
+    await cursor.close()
+    return rows

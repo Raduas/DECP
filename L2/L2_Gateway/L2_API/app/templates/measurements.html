@@ -23,20 +23,58 @@
             <h2>Query data by:</h2>
             <nav class="measQuery">
                 <ul class="filtering-list">
-                    <li><a href="#">Sensor</a></li>
+                    <li><a href="/measurements/?filter=Sensor">Sensor</a></li>
                     <li><a href="#">session(to do)</a></li>
                     <li><a href="#">Device(to do)</a></li>
                     <li><a href="#">Time Range(to do)</a></li>
                 </ul>
             </nav>
-            <h2>searched by {{ measQuery }}</h2>
-            <table>
+            {% if filter %}
+            <h2>searched by {{ filter }}</h2>
+            <table border="1" cellpadding="8">
                 <thead>
                     <tr>
-                        <th></th>
+                        <th scope="col">Sensor</th>
+                        <th scope="col">tu něco bude</th>
+                        <th scope="col">Value</th>
                     </tr>
                 </thead>
+                <tbody>
+                    {% for f in filtering %}
+                    <tr>
+                        <td scope="row"><a href=/measurements/?filter={{filter}}&sensorName={{f.sensorName}}>{{
+                                f.sensorName}}</a></td>
+                        <td>{{ f.session_id }}</td>
+                        <td>{{ f.value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
+            {% endif %}
+            {% if sensorName %}
+            <h2>Measurements for {{ sensorName }}</h2>
+            <table border="1" cellpadding="8">
+                <thead>
+                    <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Value</th>
+                        <th scope="col">Calculated</th>
+                        <th scope="col">SessionName</th>
+                        <th scope="col">status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in measurements %}
+                    <tr>
+                        <td scope="row">{{ m.timestamp }}</td>
+                        <td>{{ m.raw_value }}</td>
+                        <td>{{ m.calc_value }}</td>
+                        <td>{{ m.SessionName }}</td>
+                        <td>{{ m.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% endif %}
         </main>
     </div>
 </body>

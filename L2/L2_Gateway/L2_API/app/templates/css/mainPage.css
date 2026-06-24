@@ -64,3 +64,8 @@
      border: 2px solid #000000;
      justify-content: space-between;
  }
+
+ .Devices {
+     border: 1;
+     cellpadding: 8
+ }
