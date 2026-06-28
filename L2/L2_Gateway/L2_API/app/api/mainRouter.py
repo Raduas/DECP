@@ -1,11 +1,10 @@
 from fastapi import APIRouter
 
-#from app.api.routes import selfroutes
-from app.api.routes import devices
-#from app.core.config import settings
-from app.api.routes import measurements
+from app.api.routes import devices, measurements, graphs
+#from app.api.routes import selfroutes, settings
+ 
 api_router = APIRouter()
 api_router.include_router(devices.router)
 api_router.include_router(measurements.router)
 #api_router.include_router(selfroutes.router)
-
+api_router.include_router(graphs.router)

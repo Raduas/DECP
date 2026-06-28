@@ -51,7 +51,7 @@
      background-color: rgba(184, 201, 112, 0.233);
      margin: 0;
      padding: 10px;
-     background: red;
+     background: rgb(142, 185, 223);
  }
 
  .filtering-list {
@@ -63,9 +63,27 @@
      gap: 10px;
      border: 2px solid #000000;
      justify-content: space-between;
+     background: rgb(147, 227, 229);
  }
 
  .Devices {
      border: 1;
      cellpadding: 8
+ }
+
+ .filter {
+     background-color: royalblue;
+     border-color: rgb(118, 134, 26);
+ }
+
+ .filter-head {
+     background-color: rgb(255, 255, 255);
+ }
+
+ .filter-body {
+     background-color: rgb(255, 255, 255);
+ }
+
+ table {
+     color: rgb(0, 0, 255);
  }

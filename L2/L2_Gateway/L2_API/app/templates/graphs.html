@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Graphs</title>
+    <link href="/css/mainPage.css" rel="stylesheet">
+    <script>
+        const measJS = {{ measurements | tojson | safe }};
+    </script>
+    <script type="text/javascript" src="/js/chart.min.js"></script>
+    <script type="text/javascript" src="/js/graphs.js"></script>
+</head>
+
+<body>
+    <div class="screen">
+        <nav class="main-menu">
+            <menu>
+                <li class="main-menu1"><a href="/">WelcomePage(iprove Name)</a></li>
+                <li class="main-menu2"><a href="/devices">Devices + Sensors</a></li>
+                <li class="main-menu3"><a href="/measurements">Measurements</a></li>
+                <li class="main-menu4"><a href="/graphs">Graphs</a></li>
+                <li></li>
+                <li class="main-menu20"><a href="#">Settings</a></li>
+                <li class="main-menu21"><a href="#">About</a></li>
+            </menu>
+        </nav>
+        <main class="content">
+            <div class="graphLayout">
+                <button onclick="setLayout(1)">Generate 1 Graph</button>
+                <button onclick="setLayout(2)">Generate 2 Graphs</button>
+                <button onclick="setLayout(4)">Generate 4 Graphs</button>
+                <button onclick="realTime()">Real-time Graphs</button>
+            </div>
+
+
+            <h2>Query data by:</h2>
+            <nav class="measQuery">
+                <ul class="filtering-list">
+                    <li><a href="/graphs/?filter=Sensor">Sensor</a></li>
+                    <li><a href="/graphs/?filter=Session">Session</a></li>
+                    <li><a href="/graphs/?filter=Device">Device</a></li>
+                    <li><a href="#">Time Range(to do)</a></li>
+                </ul>
+            </nav>
+
+            {% if filter == "Sensor" %}
+            <h2>Searched by {{ filter }}</h2>
+            <table border="1" cellpadding="8">
+                <thead>
+                    <tr>
+                        <th scope="col">Sensor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in filtering %}
+                    <tr>
+                        <td scope="row"><a href=/graphs/?filter={{filter}}&detailID={{f.sensorName}}>{{
+                                f.sensorName}}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% if detailID %}
+            <h2>First graph</h2>
+            <div class="Graph">
+
+            </div>
+            {% endif %}
+            <div>End of Graphs</div>
+        </main>
+    </div>
+</body>
+
+</html>
