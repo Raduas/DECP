@@ -151,17 +151,17 @@ async def get_measurements_by_device(deviceName, limit=None):
     cursor = await db_module.db.execute("""
     SELECT timestamp, raw_value, calc_value, Null as SessionName, status
     FROM Measurements
-    WHERE SensorID = 
-        (SELECT sensorID 
-        FROM Sensors 
-        WHERE deviceID = (SELECT id FROM DeviceL1 WHERE deviceName = ?))
+    WHERE SensorID IN
+        (SELECT sensorID
+        FROM Sensors
+        WHERE deviceID IN (SELECT id FROM DeviceL1 WHERE deviceName = ?))
     UNION
     SELECT timestamp, raw_value, calc_value, SessionName, status
     FROM Session_Measurements
-    WHERE SensorID = 
-        (SELECT sensorID 
-        FROM Sensors 
-        WHERE deviceID = (SELECT id FROM DeviceL1 WHERE deviceName = ?))
+    WHERE SensorID IN
+        (SELECT sensorID
+        FROM Sensors
+        WHERE deviceID IN (SELECT id FROM DeviceL1 WHERE deviceName = ?))
     ORDER BY timestamp DESC
     LIMIT ?
     """, (deviceName, deviceName, limit))

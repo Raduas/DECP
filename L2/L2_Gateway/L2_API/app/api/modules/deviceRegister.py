@@ -26,7 +26,8 @@ async def device_register(data):
         actual_device_id = result_device["id"]    
     except Exception as e:
         print(f"Error occurred during device registration: {e}; args: {e.args}; data: {data}")
-        
+        return  # bez actual_device_id nelze pokračovat
+
 
     try:    
         config = await deviceconfig_db.insert_config(actual_device_id) # 1.1 Vytvoření výchozí konfigurace pro nové zařízení

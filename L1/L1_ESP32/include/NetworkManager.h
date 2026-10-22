@@ -4,7 +4,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "secrets.h"
-#include "Config.h"
+#include "config.h"
 class NetworkManager
 {
 public:
@@ -18,9 +18,9 @@ public:
     void sendRegistration();
     void sendMeasurement(float temp);
     void sendtemp(float temp);
-    void sendBatchMeasurement(int *measurements, int count);
+    void sendBatchMeasurement(float *measurements, int count);
     void sendMeasurementSession(float temp);
-    void sendBatchMeasurementSession(int *measurements, int count);
+    void sendBatchMeasurementSession(float *measurements, int count);
 
 private:
     AppData &appData;
@@ -28,6 +28,7 @@ private:
     PubSubClient mqttClient;
 
     void sendConfigAck();
+    void publishJson(const String &topic, JsonDocument &doc);
 
     // MQTT Callback musí být statický, abychom ho mohli předat do PubSubClient
     static void mqttCallbackWrapper(char *topic, byte *message, unsigned int length);

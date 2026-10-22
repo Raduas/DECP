@@ -1,6 +1,6 @@
 #pragma once
 #include <max6675.h>
-#include "Config.h"
+#include "config.h"
 
 class SensorManager
 {

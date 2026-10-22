@@ -5,41 +5,46 @@ from app.api.modules.deviceRegister import device_register
 
 
 async def router(topic, payload):
+    # jedna vadná zpráva nesmí shodit celou MQTT smyčku
+    try:
+        await _dispatch(topic, payload)
+    except Exception as e:
+        print(f"Error processing MQTT message on '{topic}': {type(e).__name__}: {e}; payload: {payload!r}")
+
+
+async def _dispatch(topic, payload):
 
     data = json.loads(payload)
     print(f"Received MQTT message on topic '{topic}': {data}")
 
+    # topicy měření končí MAC adresou: "l1/measurement/cont/stream/C0:49:EF:E6:3C:7C"
+    mac = topic.split("/")[-1]
 
     if topic == "l1/registration":
         await device_register(data)
-        print(f"Device registration processed for MAC: {data.get('mac_address')}")
+        print(f"Device registration processed for MAC: {data.get('mac')}")
 
-    if topic == "l1/test":
-        await meas_register(data)
-        print(f"test: {data.get('device_id')}")
+    elif topic == "l1/test":
+        # bez MAC v topicu nelze dohledat sensorID -> neukládá se
+        print(f"test: {data}")
 
-
-    if topic.startswith("l1/measurement/cont/stream/"):
-        await meas_register(data)
+    elif topic.startswith("l1/measurement/cont/stream/"):
+        await meas_register(mac, data)
         print(f"Measurement {topic} for device ID: {data.get('device_id')}")
 
-    if topic.startswith("l1/measurement/cont/batch/"):
-        await meas_register_batch(data)
-        print(f"Batch {topic} for device ID: {data.get('device_id')}")   
+    elif topic.startswith("l1/measurement/cont/batch/"):
+        await meas_register_batch(mac, data)
+        print(f"Batch {topic} for device ID: {data.get('device_id')}")
 
-    if topic.startswith("l1/measurement/session/stream/"):
-        await meas_register_cont_session(data)
-        print(f"bude")
+    elif topic.startswith("l1/measurement/session/stream/"):
+        await meas_register_cont_session(mac, data)
+        print(f"Session measurement {topic} with session name: {data.get('sessionName')}")
 
-    if topic.startswith("l1/measurement/session/batch/"):
-        await meas_register_batch_session(data)
+    elif topic.startswith("l1/measurement/session/batch/"):
+        await meas_register_batch_session(mac, data)
         print(f"Batch session {topic} for device ID: {data.get('device_id')} with session name: {data.get('sessionName')}")
 
-
-
-
-    if topic.startswith("l1/config_ack/"):
+    elif topic.startswith("l1/config_ack/"):
         # topic vypadá takto: "l1/config_ack/C0:49:EF:E6:3C:7C"
-        mac = topic.split("/")[-1] # Vytáhne MAC adresu z konce stringu
         print(f"Received config ACK for MAC: {mac}")
         await on_ack_received(mac)

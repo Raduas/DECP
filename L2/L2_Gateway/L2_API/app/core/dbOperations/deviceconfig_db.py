@@ -49,10 +49,10 @@ async def insert_config(
 
 async def update_config(
     deviceID,
-    typeMeasurement="CONTINUAL",
-    measIntervalHz=0.2,
-    measContinuity="STREAM",
-    is_active=0,
+    typeMeasurement=None,   # None = ponechat stávající hodnotu (COALESCE)
+    measIntervalHz=None,
+    measContinuity=None,
+    is_active=None,
     isDirty=1
 ):
     cursor = await db_module.db.execute("""

@@ -12,7 +12,7 @@ void NetworkManager::init()
     WiFi.mode(WIFI_STA);
     appData.macAddress = WiFi.macAddress();
     mqttClient.setServer(MQTT_SERVER, 1883);
-    mqttClient.setBufferSize(1024);
+    mqttClient.setBufferSize(2048); // batch 100 hodnot + hlavička se do 1024 B nemusí vejít
     mqttClient.setCallback(mqttCallbackWrapper);
 }
 
@@ -69,65 +69,80 @@ void NetworkManager::sendRegistration()
     mqttClient.publish("l1/registration", payload.c_str());
 }
 
+// NAN (např. odpojený termočlánek) -> JSON null, L2 to uloží se status=1
+static void setReading(JsonVariant dst, float value)
+{
+    if (isnan(value))
+    {
+        dst.set(nullptr);
+    }
+    else
+    {
+        dst.set(value);
+    }
+}
+
+void NetworkManager::publishJson(const String &topic, JsonDocument &doc)
+{
+    String payload;
+    serializeJson(doc, payload);
+    if (!mqttClient.publish(topic.c_str(), payload.c_str()))
+    {
+        printf("Chyba: publish na %s selhal (delka %u B)\n", topic.c_str(), payload.length());
+        return;
+    }
+    printf("Odesilam: %s\n na topicu: %s\n", payload.c_str(), topic.c_str());
+}
+
 void NetworkManager::sendtemp(float temp)
-{
-    String payload = "{\"device_id\":\"" + String(appData.small_id) +
-                     "\",\"local_channel\":\"" + String(appData.local_channel) +
-                     "\",\"temp\":" + String(temp) + "}"; // change to raw value
-    String topic = "l1/test";
-    mqttClient.publish(topic.c_str(), payload.c_str());
-}
-void NetworkManager::sendMeasurement(float temp)
-{
-    String payload = "{\"device_id\":\"" + String(appData.small_id) +
-                     "\",\"local_channel\":\"" + String(appData.local_channel) +
-                     "\",\"temp\":" + String(temp) + "}"; // change to raw value
-    String topic = "l1/measurement/cont/stream/" + appData.macAddress;
-    mqttClient.publish(topic.c_str(), payload.c_str());
-    printf("Odesilam mereni: %s\n na topicu: %s", payload.c_str(), topic.c_str());
-}
-void NetworkManager::sendBatchMeasurement(int *measurements, int count)
 {
     JsonDocument doc;
     doc["device_id"] = appData.small_id;
     doc["local_channel"] = appData.local_channel;
-    JsonArray arr = doc.createNestedArray("measurements");
+    setReading(doc["temp"], temp); // change to raw value
+    publishJson("l1/test", doc);
+}
+void NetworkManager::sendMeasurement(float temp)
+{
+    JsonDocument doc;
+    doc["device_id"] = appData.small_id;
+    doc["local_channel"] = appData.local_channel;
+    setReading(doc["temp"], temp); // change to raw value
+    publishJson("l1/measurement/cont/stream/" + appData.macAddress, doc);
+}
+void NetworkManager::sendBatchMeasurement(float *measurements, int count)
+{
+    JsonDocument doc;
+    doc["device_id"] = appData.small_id;
+    doc["local_channel"] = appData.local_channel;
+    JsonArray arr = doc["measurements"].to<JsonArray>();
     for (int i = 0; i < count; i++)
     {
-        arr.add(measurements[i]);
+        setReading(arr.add<JsonVariant>(), measurements[i]);
     }
-    char buffer[1024];
-    serializeJson(doc, buffer);
-    String topic = "l1/measurement/cont/batch/" + appData.macAddress;
-    mqttClient.publish(topic.c_str(), buffer);
-    printf("Odesilam batch mereni: %s\n na topicu: %s", buffer, topic.c_str());
+    publishJson("l1/measurement/cont/batch/" + appData.macAddress, doc);
 }
 void NetworkManager::sendMeasurementSession(float temp)
-{
-    String payload = "{\"device_id\":\"" + String(appData.small_id) +
-                     "\",\"local_channel\":\"" + String(appData.local_channel) +
-                     "\",\"sessionName\":\"" + String(appData.sessionName) +
-                     "\",\"temp\":" + String(temp) + "}"; // change to raw value
-    String topic = "l1/measurement/session/stream/" + appData.macAddress;
-    mqttClient.publish(topic.c_str(), payload.c_str());
-    printf("Odesilam mereni: %s\n na topicu: %s", payload.c_str(), topic.c_str());
-}
-void NetworkManager::sendBatchMeasurementSession(int *measurements, int count)
 {
     JsonDocument doc;
     doc["device_id"] = appData.small_id;
     doc["local_channel"] = appData.local_channel;
     doc["sessionName"] = appData.sessionName;
-    JsonArray arr = doc.createNestedArray("measurements");
+    setReading(doc["temp"], temp); // change to raw value
+    publishJson("l1/measurement/session/stream/" + appData.macAddress, doc);
+}
+void NetworkManager::sendBatchMeasurementSession(float *measurements, int count)
+{
+    JsonDocument doc;
+    doc["device_id"] = appData.small_id;
+    doc["local_channel"] = appData.local_channel;
+    doc["sessionName"] = appData.sessionName;
+    JsonArray arr = doc["measurements"].to<JsonArray>();
     for (int i = 0; i < count; i++)
     {
-        arr.add(measurements[i]);
+        setReading(arr.add<JsonVariant>(), measurements[i]);
     }
-    char buffer[1024];
-    serializeJson(doc, buffer);
-    String topic = "l1/measurement/session/batch/" + appData.macAddress;
-    mqttClient.publish(topic.c_str(), buffer);
-    printf("Odesilam batch mereni: %s\n na topicu: %s", buffer, topic.c_str());
+    publishJson("l1/measurement/session/batch/" + appData.macAddress, doc);
 }
 void NetworkManager::sendConfigAck()
 {

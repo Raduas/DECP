@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "Config.h"
+#include "config.h"
 #include "SensorManager.h"
 #include "NetworkManager.h"
 

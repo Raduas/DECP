@@ -45,6 +45,6 @@ struct AppData
     bool isBatch = false;               // Dead value pro budoucí rozšíření
     unsigned long sendInterval = 10000; // Interval odesílání v Batch režimu
     int currentBatchCount = 0;
-    int batchMeasurements[batchLimit]; // Pole pro uchování měření v Batch režimu
+    float batchMeasurements[batchLimit]; // Pole pro uchování měření v Batch režimu (NAN = chyba čtení)
     String sessionName;
 };

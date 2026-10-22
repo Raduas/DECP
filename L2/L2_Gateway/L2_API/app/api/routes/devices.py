@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from app.core.dbOperations import deviceconfig_db
 from app.core.dbOperations import device_db
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.api.mqtt.publishMQTT import send_response
 
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -52,6 +52,10 @@ async def config_page(request: Request, deviceID: str):
 @router.post("/config/update")
 async def update_config_api(cfg: ConfigUpdate):
 
+    mac = await device_db.get_mac_by_id(cfg.deviceID)
+    if mac is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+
     result = await deviceconfig_db.update_config(
         deviceID=cfg.deviceID,
         typeMeasurement=cfg.typeMeasurement,
@@ -59,21 +63,17 @@ async def update_config_api(cfg: ConfigUpdate):
         measContinuity=cfg.measContinuity,
         isDirty = 1
     )
+    if result is None:
+        raise HTTPException(status_code=404, detail="Config not found")
 
-    mac = await device_db.get_mac_by_id(cfg.deviceID)
+    # posílá se kompletní config z DB (nezměněná pole doplněná přes COALESCE), ne null hodnoty z requestu
+    payload = {
+        "typeMeasurement": result["typeMeasurement"],
+        "measIntervalHz": result["measIntervalHz"],
+        "measContinuity": result["measContinuity"]
+    }
     if cfg.sessionName is not None:
-        payload = {
-            "typeMeasurement": cfg.typeMeasurement,
-            "measIntervalHz": cfg.measIntervalHz,
-            "measContinuity": cfg.measContinuity,
-            "sessionName": cfg.sessionName
-        }
-    else:
-        payload = {
-            "typeMeasurement": cfg.typeMeasurement,
-            "measIntervalHz": cfg.measIntervalHz,
-            "measContinuity": cfg.measContinuity
-        }
+        payload["sessionName"] = cfg.sessionName
     await send_response(topic=f"l2/config/{mac['mac_address']}",payload=json.dumps(payload))
 
     return {"status": "sent"}
@@ -94,5 +94,7 @@ async def start_session_api(start: SessionStart):
         "is_active": start.start
     }
     mac = await device_db.get_mac_by_id(start.deviceID)
+    if mac is None:
+        raise HTTPException(status_code=404, detail="Device not found")
     await send_response(topic=f"l1/start/{mac['mac_address']}",payload=json.dumps(payload))
     return {"status": "sent"}

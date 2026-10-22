@@ -3,8 +3,10 @@ services:
   api:
     build: ./L2_API
     container_name: fastapi
+    networks: [default, decp]
     environment:
       PORT: 8000
+      L3_URL: http://backend:8001
     ports:
       - '8000:8000'
     restart: always
@@ -48,12 +50,30 @@ services:
     ports:
       - "1883:1883" #default mqtt port
       - "9001:9001" #default mqtt port for websockets
+    # image bez command spouští /mosquitto-no-auth.conf a náš config ignoruje
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
     volumes:
-      - ./L2_MQTT/config:/L2_MQTT/config:rw
-      - ./L2_MQTT/data:/L2_MQTT/data:rw
-      - ./L2_MQTT/log:/L2_MQTT/log:rw
+      - ./L2_MQTT/config:/mosquitto/config:rw
+      - ./L2_MQTT/data:/mosquitto/data:rw
+      - ./L2_MQTT/log:/mosquitto/log:rw
     restart: always
     
+
+  CV_NN:
+    build: ./L2_CV_NN
+    container_name: cv-nn
+    # rozpracované (cv2.imshow v kontejneru nepoběží) -> spouštět jen explicitně: docker compose --profile cv up
+    profiles: [cv]
+    networks: [default]
+    environment:
+      PORT: 8050
+    ports:
+      - '8050:8050'
+    restart: always
+    volumes:
+      - ./L2_data:/app/database
+    depends_on:
+      - api
 
 
 # volumes for mapping data,config and log
@@ -68,3 +88,6 @@ networks:
     name: net
   default:
     name: mqtt5-network
+  decp:
+    external: true
+    name: decp-network

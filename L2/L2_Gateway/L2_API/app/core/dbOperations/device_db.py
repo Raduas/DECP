@@ -73,8 +73,8 @@ async def get_all_devices():
             DeviceL1.mac_address,
             DeviceL1.deviceName,
             Sensors.sensorName
-        FROM  Sensors
-        LEFT JOIN DeviceL1
+        FROM  DeviceL1
+        LEFT JOIN Sensors
             ON DeviceL1.id = Sensors.deviceID
         ORDER BY DeviceL1.deviceName;
         """)
