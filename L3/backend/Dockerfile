@@ -1,11 +1,17 @@
-FROM node:26.1.0-trixie-slim
+
+FROM python:3.14
+
 
 WORKDIR /code
 
-COPY ./package.json /code/package.json
 
-RUN npm install
+COPY ./requirements.txt /code/requirements.txt
+
+
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
 
 COPY ./app /code/app
 
-CMD ["node", "app/main.js"]
+
+CMD ["fastapi", "run", "app/main.py", "--port", "8000"]

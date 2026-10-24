@@ -78,7 +78,7 @@ async def init_db():
     );
     """)
 
-    # ---------- Measurements ----------
+    # ---------- Data single ----------
     await db.execute("""
     CREATE TABLE IF NOT EXISTS Measurements (
         timestamp BIGINT NOT NULL,
@@ -105,7 +105,7 @@ async def init_db():
     CREATE INDEX IF NOT EXISTS idx_measurements_timestamp
     ON Measurements(timestamp);
     """)
-
+    # ---------- Data SESSION ----------
     await db.execute("""
     CREATE TABLE IF NOT EXISTS Session_Measurements (
         timestamp BIGINT NOT NULL,
@@ -122,7 +122,7 @@ async def init_db():
     );
     """)
 
-    # index pro výkon (velmi důležité)
+    # index
     await db.execute("""
     CREATE INDEX IF NOT EXISTS idx_session_measurements_sensor
     ON Session_Measurements(sensorID);

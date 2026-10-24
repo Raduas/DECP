@@ -1,2 +1,3 @@
 L2/L2_Gateway/L2_data
 
+L2/L2_Gateway/L2_CV_NN/app/weights/*.onnx
