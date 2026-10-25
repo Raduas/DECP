@@ -13,6 +13,7 @@ def do_unlock(name):
     print(f"ODEMČENO: {name}")
     # sem později GPIO / MQTT / HTTP volání
 
+
 def main():
     camera = IPCamera(
         host="192.168.0.244",
@@ -54,10 +55,7 @@ def main():
 
             if now - last_detection >= detection_interval:
                 # Zmenšení obrazu pro rychlejší detekci
-                small = cv2.resize(
-                    frame, (640, 360),
-                    interpolation=cv2.INTER_LINEAR
-                )
+                small = cv2.resize(frame, (640, 360), interpolation=cv2.INTER_LINEAR)
 
                 detected = detector.detect(small)
 
@@ -96,16 +94,37 @@ def main():
             for i, (face, (name, score)) in enumerate(zip(faces, labels)):
                 x, y, w, h = face[:4].astype(int)
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, f"{name} {score:.2f}", (x, y - 8),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                cv2.putText(
+                    frame,
+                    f"{name} {score:.2f}",
+                    (x, y - 8),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 255, 0),
+                    2,
+                )
                 if i < len(horns_flags) and horns_flags[i]:
-                    cv2.putText(frame, f"{name}: Gesto OK", (x, y + h + 24),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    cv2.putText(
+                        frame,
+                        f"{name}: Gesto OK",
+                        (x, y + h + 24),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8,
+                        (0, 0, 255),
+                        2,
+                    )
 
             who = unlocker.update(labels, horns_flags)
             if who:
-                cv2.putText(frame, f"ODEMCENO: {who}", (x, y + h + 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+                cv2.putText(
+                    frame,
+                    f"ODEMCENO: {who}",
+                    (x, y + h + 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1.0,
+                    (0, 255, 0),
+                    3,
+                )
 
             cv2.imshow("CV_NN", frame)
             cv2.resizeWindow("CV_NN", 1920, 1080)

@@ -10,6 +10,7 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/devices", tags=["devices"])
 templates = Jinja2Templates(directory="app/templates")
 
+
 class ConfigUpdate(BaseModel):
     deviceID: str
     typeMeasurement: str | None = None
@@ -18,16 +19,15 @@ class ConfigUpdate(BaseModel):
     sessionName: str | None = None
 
 
-
 @router.get("/", response_class=HTMLResponse)
 async def list_devices(request: Request):
-    
+
     devices = await device_db.get_all_devices()
 
-    return templates.TemplateResponse("devices.html", {
-            "request": request,
-            "devices": devices
-        })
+    return templates.TemplateResponse(
+        "devices.html", {"request": request, "devices": devices}
+    )
+
 
 # Zobrazení stránky s configem
 @router.get("/config/{deviceID}", response_class=HTMLResponse)
@@ -37,12 +37,9 @@ async def config_page(request: Request, deviceID: str):
 
     return templates.TemplateResponse(
         "config.html",
-        {
-            "request": request,
-            "deviceID": deviceID,
-            "config": dict(config)
-        }
+        {"request": request, "deviceID": deviceID, "config": dict(config)},
     )
+
 
 # Aktualizace configu
 @router.post("/config/update")
@@ -55,9 +52,9 @@ async def update_config_api(cfg: ConfigUpdate):
     result = await deviceconfig_db.update_config(
         deviceID=cfg.deviceID,
         typeMeasurement=cfg.typeMeasurement,
-        measIntervalHz = cfg.measIntervalHz,
+        measIntervalHz=cfg.measIntervalHz,
         measContinuity=cfg.measContinuity,
-        isDirty = 1
+        isDirty=1,
     )
     if result is None:
         raise HTTPException(status_code=404, detail="Config not found")
@@ -66,31 +63,30 @@ async def update_config_api(cfg: ConfigUpdate):
     payload = {
         "typeMeasurement": result["typeMeasurement"],
         "measIntervalHz": result["measIntervalHz"],
-        "measContinuity": result["measContinuity"]
+        "measContinuity": result["measContinuity"],
     }
     if cfg.sessionName is not None:
         payload["sessionName"] = cfg.sessionName
-    await send_response(topic=f"l2/config/{mac['mac_address']}",payload=json.dumps(payload))
+    await send_response(
+        topic=f"l2/config/{mac['mac_address']}", payload=json.dumps(payload)
+    )
 
     return {"status": "sent"}
-
 
 
 class SessionStart(BaseModel):
     deviceID: str
     start: bool
 
+
 @router.post("/config/start-session")
 async def start_session_api(start: SessionStart):
-    await deviceconfig_db.set_active(
-        deviceID=start.deviceID,
-        is_active=start.start
-    )
-    payload = {
-        "is_active": start.start
-    }
+    await deviceconfig_db.set_active(deviceID=start.deviceID, is_active=start.start)
+    payload = {"is_active": start.start}
     mac = await device_db.get_mac_by_id(start.deviceID)
     if mac is None:
         raise HTTPException(status_code=404, detail="Device not found")
-    await send_response(topic=f"l1/start/{mac['mac_address']}",payload=json.dumps(payload))
+    await send_response(
+        topic=f"l1/start/{mac['mac_address']}", payload=json.dumps(payload)
+    )
     return {"status": "sent"}

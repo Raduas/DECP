@@ -1,4 +1,3 @@
-
 from time import time
 
 from app.core.dbOperations.measurements_db import (
@@ -37,13 +36,13 @@ async def meas_register(mac, data):
     calc_value, status = _calc(raw)
     print(f"measureSensor: {sensorID} - raw: {raw} - calc: {calc_value}")
 
-    timestamp = int(time()*1000)
+    timestamp = int(time() * 1000)
     await insert_measurement(
         timestamp=timestamp,
         sensorID=sensorID,
         raw_value=raw,
         calc_value=calc_value,
-        status=status
+        status=status,
     )
 
 
@@ -57,18 +56,11 @@ async def meas_register_batch(mac, data):
 
     for i, raw in enumerate(measurements):
         calc_value, status = _calc(raw)
-        rows.append(
-            (
-                timestamp + i,
-                sensorID,
-                raw,
-                calc_value,
-                status
-            )
-        )
+        rows.append((timestamp + i, sensorID, raw, calc_value, status))
 
     if rows:
         await insert_measurements_batch(rows)
+
 
 async def meas_register_cont_session(mac, data):
     sensorID = await _resolve_sensor(mac, data)
@@ -77,17 +69,20 @@ async def meas_register_cont_session(mac, data):
     raw = data.get("temp")
     calc_value, status = _calc(raw)
     sessionName = data.get("sessionName")
-    print(f"measureSensor: {sensorID} - raw: {raw} - calc: {calc_value} - session: {sessionName}")
+    print(
+        f"measureSensor: {sensorID} - raw: {raw} - calc: {calc_value} - session: {sessionName}"
+    )
 
-    timestamp = int(time()*1000)
+    timestamp = int(time() * 1000)
     await insert_measurement_session(
         timestamp=timestamp,
         sensorID=sensorID,
         sessionName=sessionName,
         raw_value=raw,
         calc_value=calc_value,
-        status=status
+        status=status,
     )
+
 
 async def meas_register_batch_session(mac, data):
     sensorID = await _resolve_sensor(mac, data)
@@ -100,16 +95,7 @@ async def meas_register_batch_session(mac, data):
 
     for i, raw in enumerate(measurements):
         calc_value, status = _calc(raw)
-        rows.append(
-            (
-                timestamp + i,
-                sensorID,
-                sessionName,
-                raw,
-                calc_value,
-                status
-            )
-        )
+        rows.append((timestamp + i, sensorID, sessionName, raw, calc_value, status))
 
     if rows:
         await insert_measurements_batch_session(rows)

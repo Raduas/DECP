@@ -1,4 +1,3 @@
-
 import aiosqlite
 
 DB_PATH = "/app/database/L2.db"
@@ -9,7 +8,7 @@ async def init_db():
     global db
     db = await aiosqlite.connect(DB_PATH)
     db.row_factory = aiosqlite.Row
-        # zapnout foreign keys (SQLite je má defaultně vypnuté)
+    # zapnout foreign keys (SQLite je má defaultně vypnuté)
     await db.execute("PRAGMA foreign_keys = ON;")
     await db.execute("PRAGMA journal_mode=WAL;")
 
@@ -41,10 +40,10 @@ async def init_db():
             REFERENCES DeviceL1(id)
     );
     """)
- 
-    #await db.execute("""
-    #     ALTER TABLE configs ADD COLUMN is_active BOOLEAN DEFAULT 0;            
-    #""")
+
+    # await db.execute("""
+    #     ALTER TABLE configs ADD COLUMN is_active BOOLEAN DEFAULT 0;
+    # """)
 
     # ---------- Sensors ----------
     await db.execute("""
@@ -136,6 +135,7 @@ async def init_db():
     ON Session_Measurements(SessionName);
     """)
     await db.commit()
+
 
 # =========================
 # CLOSE DB

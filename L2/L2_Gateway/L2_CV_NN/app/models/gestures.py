@@ -6,9 +6,9 @@ import numpy as np
 class HandGestureDetector:
     def __init__(self, max_hands=1):
         self.hands = mp.solutions.hands.Hands(
-            static_image_mode=True,   # ROI se mění, tracking by nedržel
+            static_image_mode=True,  # ROI se mění, tracking by nedržel
             max_num_hands=max_hands,
-            model_complexity=0,       # lite model, na Pi4 stačí
+            model_complexity=0,  # lite model, na Pi4 stačí
             min_detection_confidence=0.6,
         )
 
@@ -34,7 +34,7 @@ class HandGestureDetector:
 
     def is_horns(self, lm):
         return (
-            self._extended(lm, 8, 6)        # ukazováček
+            self._extended(lm, 8, 6)  # ukazováček
             and self._extended(lm, 20, 18)  # malíček
             and not self._extended(lm, 12, 10)  # prostředník
             and not self._extended(lm, 16, 14)  # prsteník
@@ -45,7 +45,6 @@ class HandGestureDetector:
         x0, y0, x1, y1 = self.face_roi(face, frame.shape)
         if x1 - x0 < 64 or y1 - y0 < 64:
             return False, (x0, y0, x1, y1)
-
 
         crop = cv2.cvtColor(frame[y0:y1, x0:x1], cv2.COLOR_BGR2RGB)
         result = self.hands.process(crop)
