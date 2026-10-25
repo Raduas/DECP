@@ -1,4 +1,5 @@
-name: First CI Litt and format
+name: L2 CI – lint, format & build
+
 on:
   push:
     branches: ["main"]
@@ -9,13 +10,11 @@ on:
     paths:
       - "L2/**"
       - ".github/workflows/l2-ci.yml"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v7
 
@@ -24,3 +23,30 @@ jobs:
 
       - name: Ruff format check
         run: pipx run ruff format --check L2
+
+  build:
+    needs: lint # jen když lint prošel
+    if: github.event_name == 'push' # jen po sloučení do main, ne u PR
+    runs-on: ubuntu-24.04-arm # nativní arm64 = stejné CPU jako Pi
+    permissions:
+      contents: read # číst kód
+      packages: write # zapisovat do GHCR
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push L2 API image
+        uses: docker/build-push-action@v7
+        with:
+          context: L2/L2_Gateway/L2_API
+          push: true
+          tags: |
+            ghcr.io/raduas/decp-l2-api:${{ github.sha }}
+            ghcr.io/raduas/decp-l2-api:latest
