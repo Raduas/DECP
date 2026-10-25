@@ -1,6 +1,7 @@
 services:
 
   api:
+    image: ghcr.io/raduas/decp-l2-api:latest   # ← nový řádek
     build: ./L2_API
     container_name: fastapi
     networks: [default]
