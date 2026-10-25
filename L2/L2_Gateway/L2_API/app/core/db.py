@@ -1,4 +1,3 @@
-from time import time
 
 import aiosqlite
 
@@ -142,7 +141,6 @@ async def init_db():
 # CLOSE DB
 # =========================
 async def close_db():
-    global db
 
     if db:
         await db.close()

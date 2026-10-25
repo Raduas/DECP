@@ -1,20 +1,11 @@
 ## this will be the  entry point for the API, 
 # for measurements query
-import datetime
 
-from app.core.dbOperations import device_db
 from app.api.modules.querryFuncions import from_int_to_datetime
-from app.core.dbOperations import measurements_db
-from app.core.dbOperations import sensors_db
-from fastapi.staticfiles import StaticFiles
-from fastapi import Request
-from fastapi.templating import Jinja2Templates
+from app.core.dbOperations import device_db, measurements_db, sensors_db
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-
-
-from fastapi import APIRouter
-
+from fastapi.templating import Jinja2Templates
 
 router = APIRouter(prefix="/measurements", tags=["measurements"])
 templates = Jinja2Templates(directory="app/templates")

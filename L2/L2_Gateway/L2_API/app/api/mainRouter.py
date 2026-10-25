@@ -1,6 +1,6 @@
+from app.api.routes import devices, graphs, measurements
 from fastapi import APIRouter
 
-from app.api.routes import devices, measurements, graphs
 #from app.api.routes import selfroutes, settings
  
 api_router = APIRouter()

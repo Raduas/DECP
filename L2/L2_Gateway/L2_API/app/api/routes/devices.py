@@ -1,15 +1,11 @@
 import json
 
-from fastapi.staticfiles import StaticFiles
-from fastapi import Request
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from app.core.dbOperations import deviceconfig_db
-from app.core.dbOperations import device_db
-
-from fastapi import APIRouter, HTTPException
 from app.api.mqtt.publishMQTT import send_response
+from app.core.dbOperations import device_db, deviceconfig_db
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 templates = Jinja2Templates(directory="app/templates")
@@ -86,7 +82,7 @@ class SessionStart(BaseModel):
 
 @router.post("/config/start-session")
 async def start_session_api(start: SessionStart):
-    result = await deviceconfig_db.set_active(
+    await deviceconfig_db.set_active(
         deviceID=start.deviceID,
         is_active=start.start
     )

@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+
 class HandGestureDetector:
     def __init__(self, max_hands=1):
         self.hands = mp.solutions.hands.Hands(

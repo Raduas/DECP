@@ -1,7 +1,5 @@
-import asyncio
 
 from asyncio_mqtt import Client
-
 
 
 async def send_response(topic, payload):

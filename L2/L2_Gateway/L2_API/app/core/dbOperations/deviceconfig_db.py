@@ -1,4 +1,5 @@
 from app.core import db as db_module
+
 # =========================
 # CONFIG OPERACE    
 # =========================

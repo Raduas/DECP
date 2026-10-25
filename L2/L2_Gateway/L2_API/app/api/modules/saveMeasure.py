@@ -1,6 +1,12 @@
 
 from time import time
-from app.core.dbOperations.measurements_db import insert_measurement, insert_measurements_batch, insert_measurements_batch_session, insert_measurement_session
+
+from app.core.dbOperations.measurements_db import (
+    insert_measurement,
+    insert_measurement_session,
+    insert_measurements_batch,
+    insert_measurements_batch_session,
+)
 from app.core.dbOperations.sensors_db import get_sensor_id
 
 

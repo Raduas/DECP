@@ -1,3 +1,4 @@
+import sys
 
 import cv2
 
@@ -10,7 +11,7 @@ url = f"rtsp://{username}:{password}@192.168.0.244:554/stream1"
 cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
 if not cap.isOpened():
     print("Nepodařilo se připojit ke kameře.")
-    exit()
+    sys.exit()
 
 print("Kamera připojena. Pro ukončení stiskni Q.")
 

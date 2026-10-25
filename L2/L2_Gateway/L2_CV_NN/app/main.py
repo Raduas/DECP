@@ -1,13 +1,13 @@
-
-import cv2
 import time
 
+import cv2
 from camera import IPCamera
-from models.yunet import YuNetDetector
-from models.face_recognition import FaceRecognizer
 from faces_db.faces_db import FaceDB
+from models.face_recognition import FaceRecognizer
 from models.gestures import HandGestureDetector
+from models.yunet import YuNetDetector
 from unlock import Unlocker
+
 
 def do_unlock(name):
     print(f"ODEMČENO: {name}")

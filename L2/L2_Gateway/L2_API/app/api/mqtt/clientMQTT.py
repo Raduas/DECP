@@ -1,6 +1,10 @@
-from asyncio_mqtt import Client, MqttError
 import asyncio
+import logging
+
 from app.api.mqtt import routerMQTT
+from asyncio_mqtt import Client, MqttError
+
+logger = logging.getLogger(__name__)
 
 TOPICS = ["l1/test", "l1/registration", "l1/config_ack/+", "l1/measurement/+", "l1/batch/+","l1/measurement/+/+/+"]
 RECONNECT_DELAY_S = 5
@@ -22,6 +26,6 @@ async def mqtt_loop():
             print(f"MQTT connection error: {e}; reconnecting in {RECONNECT_DELAY_S}s")
         except asyncio.CancelledError:
             raise
-        except Exception as e:
-            print(f"Unexpected MQTT loop error: {type(e).__name__}: {e}; reconnecting in {RECONNECT_DELAY_S}s")
+        except Exception:
+            logger.exception("Unexpected MQTT loop error; reconnecting in %ds", RECONNECT_DELAY_S)
         await asyncio.sleep(RECONNECT_DELAY_S)

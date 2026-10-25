@@ -1,5 +1,7 @@
-import cv2
 from urllib.parse import quote
+
+import cv2
+
 
 class IPCamera:
     def __init__(

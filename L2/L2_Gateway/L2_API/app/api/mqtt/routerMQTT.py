@@ -1,15 +1,23 @@
 import json
-from app.core.dbOperations.measurements_db import on_ack_received
-from app.api.modules.saveMeasure import meas_register_batch, meas_register, meas_register_batch_session, meas_register_cont_session
-from app.api.modules.deviceRegister import device_register
+import logging
 
+from app.api.modules.deviceRegister import device_register
+from app.api.modules.saveMeasure import (
+    meas_register,
+    meas_register_batch,
+    meas_register_batch_session,
+    meas_register_cont_session,
+)
+from app.core.dbOperations.measurements_db import on_ack_received
+
+logger = logging.getLogger(__name__)
 
 async def router(topic, payload):
     # jedna vadná zpráva nesmí shodit celou MQTT smyčku
     try:
         await _dispatch(topic, payload)
-    except Exception as e:
-        print(f"Error processing MQTT message on '{topic}': {type(e).__name__}: {e}; payload: {payload!r}")
+    except Exception:
+        logger.exception("Error processing MQTT message on %r, payload: %r", topic, payload)
 
 
 async def _dispatch(topic, payload):

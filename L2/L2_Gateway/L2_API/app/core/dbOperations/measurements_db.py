@@ -1,5 +1,7 @@
-from app.core import db as db_module
 from time import time
+
+from app.core import db as db_module
+
 # =========================
 # MEASUREMENT OPERACE
 # =========================
@@ -12,7 +14,7 @@ async def insert_measurement(
     status=0
 ):
 
-    cursor = await db_module.db.execute("""
+    await db_module.db.execute("""
     INSERT INTO Measurements (
         timestamp,
         sensorID,
@@ -58,7 +60,7 @@ async def insert_measurement_session(
     status=0
 ):
 
-    cursor = await db_module.db.execute("""
+    await db_module.db.execute("""
     INSERT INTO Session_Measurements (
         timestamp,
         sensorID,

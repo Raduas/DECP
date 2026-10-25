@@ -1,15 +1,13 @@
-
-from urllib import request
-
-from app.core import db
-from fastapi import FastAPI
-from app.api.mqtt import clientMQTT
-from fastapi.staticfiles import StaticFiles
 import asyncio
-from app.api.mainRouter import api_router
-from fastapi.templating import Jinja2Templates
-from fastapi import Request
+import logging
 
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from app.api.mainRouter import api_router
+from app.api.mqtt import clientMQTT
+from app.core import db
 
 app = FastAPI()
 
@@ -25,6 +23,7 @@ async def startup():
     asyncio.create_task(    
         clientMQTT.mqtt_loop()
     )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 
 @app.get("/")
