@@ -3,10 +3,10 @@ services:
   api:
     build: ./L2_API
     container_name: fastapi
-    networks: [default, decp]
+    networks: [default]
     environment:
       PORT: 8000
-      L3_URL: http://backend:8001
+      L3_URL: ${L3_URL}
     ports:
       - '8000:8000'
     restart: always
@@ -88,6 +88,3 @@ networks:
     name: net
   default:
     name: mqtt5-network
-  decp:
-    external: true
-    name: decp-network

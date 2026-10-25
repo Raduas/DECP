@@ -1,4 +1,6 @@
 L2/L2_Gateway/L2_data
-
 L2/L2_Gateway/L2_CV_NN/app/weights/*.onnx
 L3/.env
+L2/L2_Gateway/L2_CV_NN/app/faces_db/*.pkl
+L2/L2_Gateway/L2_MQTT/data/
+L2/L2_Gateway/L2_MQTT/log/

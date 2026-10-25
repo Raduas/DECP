@@ -38,8 +38,7 @@ services:
     build: ./backend
     container_name: decp-backend
     environment:
-      PORT: 8001                      # na hostu se nepublikuje, takže kolize s L2 (8000) nehrozí
-      
+    
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${POSTGRES_USER}
@@ -59,7 +58,7 @@ services:
       - traefik.enable=true
       - traefik.http.routers.backend.rule=Host(`api.localhost`)
       - traefik.http.routers.backend.entrypoints=web
-      - traefik.http.services.backend.loadbalancer.server.port=8001
+      - traefik.http.services.backend.loadbalancer.server.port=8000
     restart: unless-stopped
 
   frontend:
