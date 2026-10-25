@@ -33,6 +33,7 @@ services:
   sqlite-web:
     image: coleifer/sqlite-web
     container_name: sqlite-web
+    profiles: [tools]          # ← nový řádek: spustí se jen s --profile tools
     restart: always
     ports:
       - "8089:8089"
